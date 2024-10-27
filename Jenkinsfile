@@ -36,8 +36,8 @@ pipeline {
             steps {
                 echo "Creating directory for scan results..."
                 sh '''
-                    mkdir -p /Users/mariusz/Documents/DevSecOps/Test/reports
-                    chmod -R 777 /Users/mariusz/Documents/DevSecOps/Test/reports
+                    mkdir -p ${WORKSPACE}/reports
+                    chmod -R 777 ${WORKSPACE}/reports
                 '''
                 echo "Directory created. Waiting for 5 seconds..."
                 sleep(5)
@@ -48,7 +48,7 @@ pipeline {
             steps {
                 echo "Copying passive.yaml file from repository to workspace..."
                 sh '''
-                    cp ${WORKSPACE}/passive_scan.yaml /Users/mariusz/Documents/DevSecOps/Test/passive_scan.yaml
+                    cp ${WORKSPACE}/passive_scan.yaml ${WORKSPACE}/reports/passive_scan.yaml
                 '''
                 echo "File copied. Waiting for 5 seconds..."
                 sleep(5)
@@ -60,7 +60,7 @@ pipeline {
                 echo "Starting OWASP ZAP container with full paths..."
                 sh '''
                     docker run --name zap \
-                    -v /Users/mariusz/Documents/DevSecOps/Test:/zap/wrk/:rw \
+                    -v ${WORKSPACE}/reports:/zap/wrk/:rw \
                     -t ghcr.io/zaproxy/zaproxy:stable bash -c \
                     "zap.sh -cmd -addonupdate; \
                     zap.sh -cmd -addoninstall communityScripts; \
@@ -68,10 +68,8 @@ pipeline {
                     zap.sh -cmd -addoninstall pscanrulesBeta; \
                     zap.sh -cmd -autorun /zap/wrk/passive_scan.yaml" || true
                 '''
-                echo "Listing contents of /Users/mariusz/Documents/DevSecOps/Test directory..."
-                sh 'ls -al /Users/mariusz/Documents/DevSecOps/Test/'
-                echo "Listing contents of /Users/mariusz/Documents/DevSecOps/Test/reports directory..."
-                sh 'ls -al /Users/mariusz/Documents/DevSecOps/Test/reports/'
+                echo "Listing contents of ${WORKSPACE}/reports directory..."
+                sh 'ls -al ${WORKSPACE}/reports'
                 
                 echo "Fetching ZAP container logs..."
                 sh 'docker logs zap'
@@ -85,10 +83,10 @@ pipeline {
             steps {
                 echo "Verifying scan results..."
                 sh '''
-                    ls -al /Users/mariusz/Documents/DevSecOps/Test/reports/
+                    ls -al ${WORKSPACE}/reports/
                 '''
                 echo "Archiving scan results..."
-                archiveArtifacts artifacts: '/Users/mariusz/Documents/DevSecOps/Test/reports/**/*', fingerprint: true, allowEmptyArchive: true
+                archiveArtifacts artifacts: '${WORKSPACE}/reports/**/*', fingerprint: true, allowEmptyArchive: true
                 echo "Scan results archived. Waiting for 5 seconds..."
                 sleep(5)
             }
@@ -106,9 +104,9 @@ pipeline {
                 echo "Containers stopped and removed."
 
                 echo "Checking if ZAP XML report exists..."
-                if (fileExists('/Users/mariusz/Documents/DevSecOps/Test/reports/zap_xml_report.xml')) {
+                if (fileExists('${WORKSPACE}/reports/zap_xml_report.xml')) {
                     echo "Sending ZAP XML report to DefectDojo..."
-                    defectDojoPublisher(artifact: '/Users/mariusz/Documents/DevSecOps/Test/reports/zap_xml_report.xml',
+                    defectDojoPublisher(artifact: '${WORKSPACE}/reports/zap_xml_report.xml',
                                         productName: 'Juice Shop',
                                         scanType: 'ZAP Scan',
                                         engagementName: 'mario360x@gmail.com')
@@ -117,7 +115,7 @@ pipeline {
                 }
             }
 
-            archiveArtifacts artifacts: '/Users/mariusz/Documents/DevSecOps/Test/**/*', fingerprint: true, allowEmptyArchive: true
+            archiveArtifacts artifacts: '${WORKSPACE}/**/*', fingerprint: true, allowEmptyArchive: true
         }
     }
 }
