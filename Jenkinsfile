@@ -38,10 +38,9 @@ pipeline {
 
         stage('Step 4: Copy passive.yaml File') {
             steps {
-                echo "Copying passive.yaml file to /.zap directory for OWASP ZAP..."
+                echo "Copying passive.yaml file to /tmp for OWASP ZAP..."
                 sh '''
-                    mkdir -p /.zap
-                    cp ${WORKSPACE}/passive.yaml /.zap/passive.yaml
+                    cp ${WORKSPACE}/passive.yaml /tmp/passive.yaml
                 '''
                 echo "File copied. Waiting for 5 seconds..."
                 sleep(5) // Pauza 5 sekund
@@ -55,13 +54,12 @@ pipeline {
                     docker run --name zap \
                     --add-host=host.docker.internal:host-gateway \
                     -v /tmp:/zap/wrk:rw \
-                    -v /.zap:/zap/.ZAP:rw \
                     -t ghcr.io/zaproxy/zaproxy:stable bash -c \
                     "zap.sh -cmd -addonupdate; \
                     zap.sh -cmd -addoninstall communityScripts; \
                     zap.sh -cmd -addoninstall pscanrulesAlpha; \
                     zap.sh -cmd -addoninstall pscanrulesBeta; \
-                    zap.sh -cmd -autorun /zap/.ZAP/passive.yaml" || true
+                    zap.sh -cmd -autorun /zap/wrk/passive.yaml" || true
                 '''
                 echo "OWASP ZAP scan complete. Waiting for 5 seconds..."
                 sleep(5) // Pauza 5 sekund
@@ -92,9 +90,9 @@ pipeline {
                 echo "Containers stopped and removed."
 
                 echo "Checking if ZAP XML report exists..."
-                if (fileExists('/zap/.ZAP/reports/zap_xml_report.xml')) {
+                if (fileExists('/tmp/reports/zap_xml_report.xml')) {
                     echo "Sending ZAP XML report to DefectDojo..."
-                    defectDojoPublisher(artifact: '/zap/.ZAP/reports/zap_xml_report.xml',
+                    defectDojoPublisher(artifact: '/tmp/reports/zap_xml_report.xml',
                                         productName: 'Juice Shop',
                                         scanType: 'ZAP Scan',
                                         engagementName: 'mario360x@gmail.com')
