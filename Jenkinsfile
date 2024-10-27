@@ -48,9 +48,10 @@ pipeline {
             steps {
                 echo "Copying passive.yaml file from repository to workspace..."
                 sh '''
-                    cp ${WORKSPACE}/passive_scan.yaml ${WORKSPACE}/reports/passive_scan.yaml
+                    cp ${WORKSPACE}/passive.yaml ${WORKSPACE}/reports/passive_scan.yaml
                 '''
-                echo "File copied. Waiting for 5 seconds..."
+                echo "File copied. Verifying copied file..."
+                sh 'ls -al ${WORKSPACE}/reports' // Sprawdzamy, czy plik został prawidłowo skopiowany
                 sleep(5)
             }
         }
@@ -59,9 +60,7 @@ pipeline {
             steps {
                 echo "Starting OWASP ZAP container with full paths..."
                 sh '''
-                    docker run --name zap \
-                    -v ${WORKSPACE}/reports:/zap/wrk/:rw \
-                    -t ghcr.io/zaproxy/zaproxy:stable bash -c \
+                    docker run --name zap -v ${WORKSPACE}/reports:/zap/wrk/:rw -t ghcr.io/zaproxy/zaproxy:stable bash -c \
                     "zap.sh -cmd -addonupdate; \
                     zap.sh -cmd -addoninstall communityScripts; \
                     zap.sh -cmd -addoninstall pscanrulesAlpha; \
@@ -82,11 +81,9 @@ pipeline {
         stage('Step 6: Verify and Archive Scan Results') {
             steps {
                 echo "Verifying scan results..."
-                sh '''
-                    ls -al ${WORKSPACE}/reports/
-                '''
+                sh 'ls -al ${WORKSPACE}/reports/'
                 echo "Archiving scan results..."
-                archiveArtifacts artifacts: '${WORKSPACE}/reports/**/*', fingerprint: true, allowEmptyArchive: true
+                archiveArtifacts artifacts: 'reports/**/*', fingerprint: true, allowEmptyArchive: true
                 echo "Scan results archived. Waiting for 5 seconds..."
                 sleep(5)
             }
@@ -115,7 +112,7 @@ pipeline {
                 }
             }
 
-            archiveArtifacts artifacts: '${WORKSPACE}/**/*', fingerprint: true, allowEmptyArchive: true
+            archiveArtifacts artifacts: '**/*', fingerprint: true, allowEmptyArchive: true
         }
     }
 }
