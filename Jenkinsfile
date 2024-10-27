@@ -36,8 +36,8 @@ pipeline {
             steps {
                 echo "Creating directory for scan results..."
                 sh '''
-                    mkdir -p /zap-results/reports
-                    chmod -R 777 /zap-results/reports
+                    mkdir -p ${WORKSPACE}/zap-results/reports
+                    chmod -R 777 ${WORKSPACE}/zap-results/reports
                 '''
                 echo "Directory created. Waiting for 5 seconds..."
                 sleep(5)
@@ -48,7 +48,7 @@ pipeline {
             steps {
                 echo "Copying passive.yaml file from repository to workspace..."
                 sh '''
-                    cp ${WORKSPACE}/passive_scan.yaml /zap-results/passive_scan.yaml
+                    cp ${WORKSPACE}/passive_scan.yaml ${WORKSPACE}/zap-results/passive_scan.yaml
                 '''
                 echo "File copied. Waiting for 5 seconds..."
                 sleep(5)
@@ -60,7 +60,7 @@ pipeline {
                 echo "Starting OWASP ZAP container with full paths..."
                 sh '''
                     docker run --name zap \
-                    -v /zap-results:/zap/wrk/:rw \
+                    -v ${WORKSPACE}/zap-results:/zap/wrk/:rw \
                     -t ghcr.io/zaproxy/zaproxy:stable bash -c \
                     "zap.sh -cmd -addonupdate; \
                     zap.sh -cmd -addoninstall communityScripts; \
@@ -68,10 +68,10 @@ pipeline {
                     zap.sh -cmd -addoninstall pscanrulesBeta; \
                     zap.sh -cmd -autorun /zap/wrk/passive_scan.yaml" || true
                 '''
-                echo "Listing contents of /zap-results directory..."
-                sh 'ls -al /zap-results/'
-                echo "Listing contents of /zap-results/reports directory..."
-                sh 'ls -al /zap-results/reports/'
+                echo "Listing contents of ${WORKSPACE}/zap-results directory..."
+                sh 'ls -al ${WORKSPACE}/zap-results/'
+                echo "Listing contents of ${WORKSPACE}/zap-results/reports directory..."
+                sh 'ls -al ${WORKSPACE}/zap-results/reports/'
                 
                 echo "Fetching ZAP container logs..."
                 sh 'docker logs zap'
