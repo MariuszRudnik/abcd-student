@@ -1,20 +1,20 @@
 pipeline {
     agent any
     options {
-        skipDefaultCheckout(true) // Pomijanie domyślnego checkoutu
+        skipDefaultCheckout(true)
     }
 
     stages {
         stage('Step 1: Code Checkout') {
             steps {
                 script {
-                    cleanWs() // Czyszczenie workspace
-                    echo "Checking out code from GitHub repository..."
+                    cleanWs()
+                    echo "Cloning the GitHub repository..."
                     git credentialsId: 'github-pat', url: 'https://github.com/MariuszRudnik/abcd-student', branch: 'main'
-                    echo "Code checked out. Listing workspace contents..."
-                    sh 'ls -al ${WORKSPACE}'  // Wyświetlenie zawartości katalogu roboczego
+                    echo "Code cloned. Listing workspace contents..."
+                    sh 'ls -al ${WORKSPACE}'
                     echo "Waiting for 5 seconds..."
-                    sleep(5) // Pauza 5 sekund
+                    sleep(5)
                 }
             }
         }
@@ -27,64 +27,35 @@ pipeline {
                         docker run --name juice-shop -d --rm -p 3000:3000 bkimminich/juice-shop
                     '''
                     echo "Juice Shop is running. Waiting for 5 seconds..."
-                    sleep(5) // Pauza 5 sekund
+                    sleep(5)
                 }
             }
         }
 
-        stage('Step 3: Prepare Directory for Scan Results') {
+        stage('Step 3: Run OSV-Scanner for Vulnerability Scanning') {
             steps {
-                echo "Creating directory for scan results..."
-                sh '''
-                    mkdir -p /tmp/reports
-                    chmod -R 777 /tmp/reports
-                '''
-                echo "Directory created. Waiting for 5 seconds..."
-                sleep(5) // Pauza 5 sekund
+                script {
+                    echo "Running OSV-Scanner to check for vulnerabilities..."
+                    sh '''
+                        # Instalacja i uruchomienie OSV-Scanner na plikach projektu
+                        curl -LO https://github.com/google/osv-scanner/releases/latest/download/osv-scanner-linux-amd64
+                        chmod +x osv-scanner-linux-amd64
+                        ./osv-scanner-linux-amd64 --output osv_scan_report.json --path ${WORKSPACE}
+                    '''
+                    echo "OSV-Scanner scan completed. Waiting for 5 seconds..."
+                    sleep(5)
+                }
             }
         }
 
-        stage('Step 4: Copy passive.yaml File') {
+        stage('Step 4: Verify and Archive Scan Results') {
             steps {
-                echo "Copying passive.yaml file to /tmp directory for ZAP access..."
-                // Kopiowanie pliku passive.yaml do /tmp
-                sh '''
-                    cp ${WORKSPACE}/passive.yaml /tmp/passive.yaml
-                    chmod 777 /tmp/passive.yaml
-                '''
-                echo "File copied. Waiting for 5 seconds..."
-                sleep(5) // Pauza 5 sekund
-            }
-        }
-
-        stage('Step 5: Run OWASP ZAP for Passive Scanning') {
-            steps {
-                echo "Starting OWASP ZAP container..."
-                sh '''
-                    docker run --name zap \
-                    --add-host=host.docker.internal:host-gateway \
-                    -v /tmp:/zap/wrk:rw \
-                    -t ghcr.io/zaproxy/zaproxy:stable bash -c \
-                    "zap.sh -cmd -addonupdate; \
-                    zap.sh -cmd -addoninstall communityScripts; \
-                    zap.sh -cmd -addoninstall pscanrulesAlpha; \
-                    zap.sh -cmd -addoninstall pscanrulesBeta; \
-                    zap.sh -cmd -autorun /zap/wrk/passive.yaml" || true
-                '''
-                echo "OWASP ZAP scan complete. Waiting for 5 seconds..."
-                sleep(5) // Pauza 5 sekund
-            }
-        }
-
-        stage('Step 6: Verify and Archive Scan Results') {
-            steps {
-                echo "Verifying scan results..."
-                sh 'ls -al /tmp/reports' // Sprawdzanie zawartości katalogu z wynikami
-
-                echo "Archiving scan results..."
-                archiveArtifacts artifacts: '/tmp/reports/**/*', fingerprint: true, allowEmptyArchive: true
+                echo "Verifying OSV-Scanner scan results..."
+                sh 'ls -al ${WORKSPACE}'
+                echo "Archiving OSV-Scanner scan results..."
+                archiveArtifacts artifacts: 'osv_scan_report.json', fingerprint: true, allowEmptyArchive: true
                 echo "Scan results archived. Waiting for 5 seconds..."
-                sleep(5) // Pauza 5 sekund
+                sleep(5)
             }
         }
     }
@@ -94,25 +65,24 @@ pipeline {
             script {
                 echo "Cleaning up Docker containers..."
                 sh '''
-                    docker stop zap juice-shop || true
-                    docker rm zap juice-shop || true
+                    docker stop juice-shop || true
+                    docker rm juice-shop || true
                 '''
                 echo "Containers stopped and removed."
 
-                echo "Checking if ZAP XML report exists..."
-                if (fileExists('/tmp/reports/zap_xml_report.xml')) {
-                    echo "Sending ZAP XML report to DefectDojo..."
-                    defectDojoPublisher(artifact: '/tmp/reports/zap_xml_report.xml',
+                echo "Checking if OSV-Scanner report exists..."
+                if (fileExists('${WORKSPACE}/osv_scan_report.json')) {
+                    echo "Sending OSV-Scanner report to DefectDojo..."
+                    defectDojoPublisher(artifact: '${WORKSPACE}/osv_scan_report.json',
                                         productName: 'Juice Shop',
-                                        scanType: 'ZAP Scan',
+                                        scanType: 'OSV-Scan',
                                         engagementName: 'mario360x@gmail.com')
                 } else {
-                    echo "ZAP XML report not found, skipping DefectDojo upload."
+                    echo "OSV-Scanner report not found, skipping DefectDojo upload."
                 }
             }
 
-            // Archiwizowanie wyników w Jenkinsie
-            archiveArtifacts artifacts: '/tmp/reports/**/*', fingerprint: true, allowEmptyArchive: true
+            archiveArtifacts artifacts: '**/*', fingerprint: true, allowEmptyArchive: true
         }
     }
 }
