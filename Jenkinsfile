@@ -60,13 +60,18 @@ pipeline {
             steps {
                 echo "Starting OWASP ZAP container with full paths..."
                 sh '''
+                    # Uruchomienie kontenera ZAP z zamontowanym katalogiem
                     docker run --name zap -v ${WORKSPACE}/reports:/zap/wrk/:rw -t ghcr.io/zaproxy/zaproxy:stable bash -c "\
                     ls -al /zap/wrk/ && \
                     zap.sh -cmd -addonupdate; \
                     zap.sh -cmd -addoninstall communityScripts; \
                     zap.sh -cmd -addoninstall pscanrulesAlpha; \
                     zap.sh -cmd -addoninstall pscanrulesBeta; \
-                    zap.sh -cmd -autorun /zap/wrk/passive_scan.yaml" || true
+                    if [ -f /zap/wrk/passive_scan.yaml ]; then \
+                        zap.sh -cmd -autorun /zap/wrk/passive_scan.yaml; \
+                    else \
+                        echo 'passive_scan.yaml file not found in /zap/wrk/'; \
+                    fi" || true
                 '''
                 echo "Listing contents of ${WORKSPACE}/reports directory..."
                 sh 'ls -al ${WORKSPACE}/reports'
