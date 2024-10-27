@@ -35,23 +35,9 @@ pipeline {
         stage('Step 3: Run OSV-Scanner for Vulnerability Scanning') {
             steps {
                 script {
-                    echo "Downloading OSV-Scanner..."
+                    echo "Running OSV-Scanner as a Docker container..."
                     sh '''
-                        curl -LO https://github.com/google/osv-scanner/releases/latest/download/osv-scanner-linux-amd64
-                        chmod +x osv-scanner-linux-amd64
-                    '''
-
-                    echo "Verifying OSV-Scanner binary..."
-                    sh '''
-                        if [ ! -s osv-scanner-linux-amd64 ]; then
-                            echo "Error: OSV-Scanner binary is empty or missing."
-                            exit 1
-                        fi
-                    '''
-                    
-                    echo "Running OSV-Scanner to check for vulnerabilities..."
-                    sh '''
-                        ./osv-scanner-linux-amd64 --output osv_scan_report.json --path ${WORKSPACE} || echo "OSV-Scanner failed to execute"
+                        docker run --rm -v ${WORKSPACE}:/workspace:ro gcr.io/osv-scanner/osv-scanner --output osv_scan_report.json --path /workspace
                     '''
                     echo "OSV-Scanner scan completed. Waiting for 5 seconds..."
                     sleep(5)
