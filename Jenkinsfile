@@ -60,8 +60,9 @@ pipeline {
             steps {
                 echo "Starting OWASP ZAP container with full paths..."
                 sh '''
-                    docker run --name zap -v ${WORKSPACE}/reports:/zap/wrk/:rw -t ghcr.io/zaproxy/zaproxy:stable bash -c \
-                    "zap.sh -cmd -addonupdate; \
+                    docker run --name zap -v ${WORKSPACE}/reports:/zap/wrk/:rw -t ghcr.io/zaproxy/zaproxy:stable bash -c "\
+                    ls -al /zap/wrk/ && \
+                    zap.sh -cmd -addonupdate; \
                     zap.sh -cmd -addoninstall communityScripts; \
                     zap.sh -cmd -addoninstall pscanrulesAlpha; \
                     zap.sh -cmd -addoninstall pscanrulesBeta; \
