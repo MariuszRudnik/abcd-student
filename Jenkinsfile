@@ -10,7 +10,7 @@ pipeline {
                 script {
                     cleanWs() // Czyszczenie workspace
                     echo "Checking out code from GitHub repository..."
-                    git credentialsId: 'github-pat', url: 'https://github.com/MariuszRudnik/abcd-student', branch: 'ZAP'
+                    git credentialsId: 'github-pat', url: 'https://github.com/MariuszRudnik/abcd-student', branch: 'main'
                     echo "Code checked out. Listing workspace contents..."
                     sh 'ls -al ${WORKSPACE}'  // Wyświetlenie zawartości katalogu roboczego
                     echo "Waiting for 5 seconds..."
@@ -20,15 +20,13 @@ pipeline {
         }
 
         stage('Step 2: Prepare') {
-            steps{
+            steps {
                 sh 'mkdir -p results'
-            }
             }
         }
 
         stage('Step 3: Dast') {
             steps {
-        
                 sh '''
                     mkdir -p /tmp/reports
                     chmod -R 777 /tmp/reports
@@ -43,6 +41,7 @@ pipeline {
                 echo "Copying passive.yaml file from repository to workspace..."
                 // Kopiowanie pliku passive.yaml do zap-results
                 sh '''
+                    mkdir -p zap-results
                     cp ${WORKSPACE}/passive.yaml ./zap-results/passive.yaml
                 '''
                 echo "File copied. Waiting for 5 seconds..."
@@ -87,8 +86,8 @@ pipeline {
             script {
                 echo "Cleaning up Docker containers..."
                 sh '''
-                    docker stop zap juice-shop || true
-                    docker rm zap juice-shop || true
+                    docker stop zap || true
+                    docker rm zap || true
                 '''
                 echo "Containers stopped and removed."
 
@@ -108,4 +107,4 @@ pipeline {
             archiveArtifacts artifacts: '/tmp/reports/**/*', fingerprint: true, allowEmptyArchive: true
         }
     }
-
+}
