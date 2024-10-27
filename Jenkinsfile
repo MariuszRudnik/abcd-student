@@ -59,7 +59,7 @@ pipeline {
                     zap.sh -cmd -addoninstall communityScripts; \
                     zap.sh -cmd -addoninstall pscanrulesAlpha; \
                     zap.sh -cmd -addoninstall pscanrulesBeta; \
-                    zap.sh -cmd -autorun /zap/wrk/passive.yaml" || true
+                    zap.sh -cmd -autorun /zap/passive.yaml" || true
                 '''
                 echo "OWASP ZAP scan complete. Waiting for 5 seconds..."
                 sleep(5) // Pauza 5 sekund
