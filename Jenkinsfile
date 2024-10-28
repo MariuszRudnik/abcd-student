@@ -27,7 +27,7 @@ pipeline {
                 sh '''
                     docker run --name zap \
                         --add-host=host.docker.internal:host-gateway \
-                        -v ${WORKSPACE}/passive.yaml:/zap/wrk/passive.yaml:rw \
+                        -v ${WORKSPACE}:/zap/wrk/passive.yaml:rw \
                         -v ${WORKSPACE}/results:/zap/wrk/reports:rw \
                         -t ghcr.io/zaproxy/zaproxy:stable bash -c \
                         "zap.sh -cmd -addonupdate; \
