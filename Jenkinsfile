@@ -29,12 +29,12 @@ pipeline {
                         -t ghcr.io/zaproxy/zaproxy:stable bash -c "
                             zap.sh -cmd -addonupdate; \
                             zap.sh -cmd -addoninstall communityScripts pscanrulesAlpha pscanrulesBeta; \
-                            zap.sh -cmd -autorun /zap/wrk/passive.yaml" || true
+                            zap.sh -cmd -autorun /zap/wrk/passive.yaml && tail -f /dev/null" || true
                     '''
                     
-                    // Dodajemy logowanie, aby sprawdzić katalog /zap/wrk w kontenerze ZAP
-                    echo 'Checking contents of /zap/wrk in zap container...'
-                    sh 'docker exec zap ls -la /zap/wrk'
+                    // Sprawdzenie, czy kontener zap nadal działa
+                    echo 'Verifying if ZAP container is running...'
+                    sh 'docker ps | grep zap || echo "ZAP container is not running."'
                     
                     echo 'Checking ZAP results directory content...'
                     sh 'ls -la ${WORKSPACE}/results'
