@@ -18,18 +18,21 @@ pipeline {
         stage('DAST') {
             steps {
                 script {
+                    echo 'Stopping any running instance of Juice Shop...'
+                    sh 'docker stop juice-shop || true' // zatrzymanie kontenera, jeśli istnieje
+
                     echo 'Starting Juice Shop application...'
                     sh 'docker run --name juice-shop -d --rm -p 3000:3000 bkimminich/juice-shop'
                     
                     echo 'Running ZAP scan...'
                     sh '''
-            docker run --name zap \
-                --add-host=host.docker.internal:host-gateway \
-                -v /path/to/dir/with/passive/scan/yaml:/zap/wrk/:rw
-                -t ghcr.io/zaproxy/zaproxy:stable bash -c \
-                "zap.sh -cmd -addonupdate; zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /zap/wrk/passive_scan.yaml" \
-                || true
-        '''
+                    docker run --name zap \
+                        --add-host=host.docker.internal:host-gateway \
+                        -v /path/to/dir/with/passive/scan/yaml:/zap/wrk/:rw \
+                        -t ghcr.io/zaproxy/zaproxy:stable bash -c \
+                        "zap.sh -cmd -addonupdate; zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /zap/wrk/passive_scan.yaml" \
+                        || true
+                    '''
                     
                     echo 'Verifying if ZAP container is running...'
                     sh 'docker ps | grep zap || echo "ZAP container is not running."'
