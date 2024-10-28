@@ -9,6 +9,12 @@ pipeline {
                 // Tworzenie katalogu na wyniki
                 sh 'mkdir -p results/'
 
+                // Zatrzymanie i usunięcie istniejących kontenerów przed uruchomieniem nowych
+                sh '''
+                    docker stop juice-shop zap || true
+                    docker rm juice-shop zap || true
+                '''
+
                 // Uruchomienie aplikacji Juice Shop
                 sh '''
                     docker run --name juice-shop -d --rm \
@@ -21,16 +27,16 @@ pipeline {
                 sh '''
                     docker run --name zap \
                         --add-host=host.docker.internal:host-gateway \
-                        -v ${WORKSPACE}/passive_scan.yaml:/zap/wrk/passive_scan.yaml:rw \
+                        -v ${WORKSPACE}/passive.yaml:/zap/wrk/passive.yaml:rw \
                         -v ${WORKSPACE}/results:/zap/wrk/reports:rw \
                         -t ghcr.io/zaproxy/zaproxy:stable bash -c \
                         "zap.sh -cmd -addonupdate; \
                          zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta; \
-                         zap.sh -cmd -autorun /zap/wrk/passive_scan.yaml" || true
+                         zap.sh -cmd -autorun /zap/wrk/passive.yaml" || true
                 '''
-                
+
                 // Sprawdzanie zawartości katalogu raportów w kontenerze ZAP
-                sh 'docker exec zap ls -la /zap/wrk/reports'
+                sh 'docker exec zap ls -la /zap/wrk/reports || echo "Reports not generated."'
             }
             post {
                 always {
