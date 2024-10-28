@@ -24,13 +24,17 @@ pipeline {
                     echo 'Running ZAP scan...'
                     sh '''
                         docker run --name zap \
-                        -v ${WORKSPACE}/results:/zap/wrk \
+                        -v ${WORKSPACE}/results:/zap/wrk/results \
                         -v /var/jenkins_home/workspace/ZAP/passive.yaml:/zap/wrk/passive.yaml \
                         -t ghcr.io/zaproxy/zaproxy:stable bash -c "
                             zap.sh -cmd -addonupdate; \
                             zap.sh -cmd -addoninstall communityScripts pscanrulesAlpha pscanrulesBeta; \
                             zap.sh -cmd -autorun /zap/wrk/passive.yaml" || true
                     '''
+                    
+                    // Dodajemy logowanie, aby sprawdzić katalog /zap/wrk w kontenerze ZAP
+                    echo 'Checking contents of /zap/wrk in zap container...'
+                    sh 'docker exec zap ls -la /zap/wrk'
                     
                     echo 'Checking ZAP results directory content...'
                     sh 'ls -la ${WORKSPACE}/results'
