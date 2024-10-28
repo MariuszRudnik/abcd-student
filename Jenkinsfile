@@ -25,11 +25,15 @@ pipeline {
                     sh '''
                         docker run --name zap \
                         -v ${WORKSPACE}/results:/zap/wrk \
+                        -v /var/jenkins_home/workspace/ZAP/passive.yaml:/zap/wrk/passive.yaml \
                         -t ghcr.io/zaproxy/zaproxy:stable bash -c "
                             zap.sh -cmd -addonupdate; \
                             zap.sh -cmd -addoninstall communityScripts pscanrulesAlpha pscanrulesBeta; \
-                            zap.sh -cmd -autorun /zap/wrk/passive_scan.yaml" || true
+                            zap.sh -cmd -autorun /zap/wrk/passive.yaml" || true
                     '''
+                    
+                    echo 'Checking ZAP results directory content...'
+                    sh 'ls -la ${WORKSPACE}/results'
                 }
             }
         }
