@@ -1,108 +1,69 @@
 pipeline {
     agent any
     options {
-        skipDefaultCheckout(true) // Pomijanie domyślnego checkoutu
+        skipDefaultCheckout(true)
     }
-
     stages {
-        stage('Step 1: Code checkout for GitHub') {
+        stage('Checkout') {
             steps {
-                script {
-                    cleanWs() // Czyszczenie workspace
-                    echo "Checking out code from GitHub repository..."
-                    git credentialsId: 'github-pat', url: 'https://github.com/MariuszRudnik/abcd-student', branch: 'main'
-                    echo "Code checked out. Listing workspace contents..."
-                    sh 'ls -al ${WORKSPACE}'  // Wyświetlenie zawartości katalogu roboczego
-                    echo "Waiting for 5 seconds..."
-                    sleep(5) // Pauza 5 sekund
-                }
+                cleanWs()
+                git credentialsId: 'github-pat', url: 'https://github.com/MariuszRudnik/abcd-student', branch: 'ZAP'
             }
         }
-
-        stage('Step 2: Prepare') {
+        stage('Prepare') {
             steps {
                 sh 'mkdir -p results'
             }
         }
-
-        stage('Step 3: Dast') {
+        stage('DAST') {
             steps {
-                sh '''
-                    mkdir -p /tmp/reports
-                    chmod -R 777 /tmp/reports
-                '''
-                echo "Directory created. Waiting for 5 seconds..."
-                sleep(5) // Pauza 5 sekund
-            }
-        }
-
-        stage('Step 4: Copy passive.yaml File') {
-            steps {
-                echo "Copying passive.yaml file to /tmp for OWASP ZAP..."
-                sh '''
-                    cp ${WORKSPACE}/passive.yaml /tmp/passive.yaml
-                '''
-                echo "File copied. Waiting for 5 seconds..."
-                sleep(5) // Pauza 5 sekund
-            }
-        }
-
-        stage('Step 5: Run OWASP ZAP for Passive Scanning') {
-            steps {
-                echo "Starting OWASP ZAP container..."
-                sh '''
-                    docker run --name zap \
-                    --add-host=host.docker.internal:host-gateway \
-                    -v /tmp:/zap/wrk:rw \
-                    -t ghcr.io/zaproxy/zaproxy:stable bash -c \
-                    "zap.sh -cmd -addonupdate; \
-                    zap.sh -cmd -addoninstall communityScripts; \
-                    zap.sh -cmd -addoninstall pscanrulesAlpha; \
-                    zap.sh -cmd -addoninstall pscanrulesBeta; \
-                    zap.sh -cmd -autorun /zap/wrk/passive.yaml" || true
-                '''
-                echo "OWASP ZAP scan complete. Waiting for 5 seconds..."
-                sleep(5) // Pauza 5 sekund
-            }
-        }
-
-        stage('Step 6: Archive Scan Results') {
-            steps {
-                echo "Verifying scan results..."
-                sh 'ls -al /tmp/reports' // Sprawdzanie zawartości katalogu z wynikami
-
-                echo "Archiving scan results..."
-                archiveArtifacts artifacts: '/tmp/reports/**/*', fingerprint: true, allowEmptyArchive: true
-                echo "Scan results archived. Waiting for 5 seconds..."
-                sleep(5) // Pauza 5 sekund
+                script {
+                    echo 'Starting Juice Shop application...'
+                    sh 'docker run --name juice-shop -d --rm -p 3000:3000 bkimminich/juice-shop'
+                    
+                    echo 'Running ZAP scan...'
+                    sh '''
+                        docker run --name zap \
+                        -v ${WORKSPACE}/results:/zap/wrk \
+                        -t ghcr.io/zaproxy/zaproxy:stable bash -c "
+                            zap.sh -cmd -addonupdate; \
+                            zap.sh -cmd -addoninstall communityScripts pscanrulesAlpha pscanrulesBeta; \
+                            zap.sh -cmd -autorun /zap/wrk/passive_scan.yaml" || true
+                    '''
+                }
             }
         }
     }
-
     post {
         always {
             script {
-                echo "Cleaning up Docker containers..."
+                echo 'Copying ZAP reports...'
                 sh '''
-                    docker stop zap || true
-                    docker rm zap || true
+                    docker cp zap:/zap/wrk/reports/zap_html_report.html ${WORKSPACE}/results/zap_html_report.html || true
+                    docker cp zap:/zap/wrk/reports/zap_xml_report.xml ${WORKSPACE}/results/zap_xml_report.xml || true
                 '''
-                echo "Containers stopped and removed."
-
-                echo "Checking if ZAP XML report exists..."
-                if (fileExists('/tmp/reports/zap_xml_report.xml')) {
-                    echo "Sending ZAP XML report to DefectDojo..."
-                    defectDojoPublisher(artifact: '/tmp/reports/zap_xml_report.xml',
-                                        productName: 'Juice Shop',
-                                        scanType: 'ZAP Scan',
-                                        engagementName: 'mario360x@gmail.com')
+                
+                echo 'Stopping and cleaning up Docker containers...'
+                sh '''
+                    docker stop zap juice-shop || true
+                    docker rm zap juice-shop || true
+                '''
+                
+                echo 'Checking for ZAP XML report and uploading to DefectDojo...'
+                if (fileExists('${WORKSPACE}/results/zap_xml_report.xml')) {
+                    defectDojoPublisher(
+                        artifact: '${WORKSPACE}/results/zap_xml_report.xml',
+                        productName: 'Juice Shop',
+                        scanType: 'ZAP Scan',
+                        engagementName: 'mario360x@gmail.com'
+                    )
                 } else {
-                    echo "ZAP XML report not found, skipping DefectDojo upload."
+                    echo 'ZAP XML report not found, skipping DefectDojo upload.'
                 }
+                
+                echo 'Archiving artifacts...'
+                archiveArtifacts artifacts: 'results/**/*', fingerprint: true, allowEmptyArchive: true
             }
-
-            // Archiwizowanie wyników w Jenkinsie
-            archiveArtifacts artifacts: '/tmp/reports/**/*', fingerprint: true, allowEmptyArchive: true
         }
     }
 }
