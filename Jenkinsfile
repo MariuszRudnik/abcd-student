@@ -4,8 +4,32 @@ pipeline {
         skipDefaultCheckout(true)
     }
     stages {
-        // (pozostałe etapy bez zmian)
-        
+        stage('Code checkout from GitHub') {
+            steps {
+                script {
+                    cleanWs()
+                    git credentialsId: 'devsecops', url: 'https://github.com/MariuszRudnik/abcd-student', branch: 'ZAP'
+                }
+            }
+        }
+        stage('Prepare') {
+            steps {
+                sh 'mkdir -p results/ .zap/' // Tworzenie katalogów na wyniki i konfigurację ZAP
+            }
+        }
+        stage('Check for passive.yaml') {
+            steps {
+                script {
+                    // Sprawdzenie, czy plik passive.yaml istnieje
+                    def passiveFileExists = fileExists "${WORKSPACE}/.zap/passive.yaml"
+                    if (!passiveFileExists) {
+                        error "Błąd: Plik passive.yaml nie został znaleziony w katalogu ${WORKSPACE}/.zap/"
+                    } else {
+                        echo "Plik passive.yaml został znaleziony."
+                    }
+                }
+            }
+        }
         stage('[ZAP] Baseline passive-scan') {
             steps {
                 script {
@@ -27,31 +51,36 @@ pipeline {
                     '''
                 }
             }
-            post {
-                always {
-                    script {
-                        // Kopiowanie raportów bez sprawdzania ich istnienia, ponieważ będą w kontenerze ZAP
-                        sh '''
-                            echo "Kopiowanie raportów z kontenera ZAP do workspace..."
-                            docker cp zap:/zap/wrk/reports/zap_html_report.html "${WORKSPACE}/results/zap_html_report.html" || echo "Nie znaleziono zap_html_report.html"
-                            docker cp zap:/zap/wrk/reports/zap_xml_report.xml "${WORKSPACE}/results/zap_xml_report.xml" || echo "Nie znaleziono zap_xml_report.xml"
-                        '''
+        }
+        stage('Copy ZAP Reports') {
+            steps {
+                script {
+                    // Kopiowanie raportów z kontenera ZAP do katalogu `results` w Jenkins
+                    sh '''
+                        echo "Kopiowanie raportów z kontenera ZAP do workspace..."
+                        docker cp zap:/zap/wrk/reports/zap_html_report.html "${WORKSPACE}/results/zap_html_report.html" || echo "Nie znaleziono zap_html_report.html"
+                        docker cp zap:/zap/wrk/reports/zap_xml_report.xml "${WORKSPACE}/results/zap_xml_report.xml" || echo "Nie znaleziono zap_xml_report.xml"
+                    '''
+                }
+            }
+        }
+        stage('Clean up Containers') {
+            steps {
+                script {
+                    // Zatrzymywanie i usuwanie kontenerów
+                    sh '''
+                        echo "Zatrzymywanie i usuwanie kontenerów..."
                         
-                        // Zatrzymywanie i usuwanie kontenerów
-                        sh '''
-                            echo "Zatrzymywanie i usuwanie kontenerów..."
-                            
-                            if [ $(docker ps -q -f name=zap) ]; then
-                                docker stop zap || true
-                                docker rm zap || true
-                            fi
-                            
-                            if [ $(docker ps -q -f name=juice-shop) ]; then
-                                docker stop juice-shop || true
-                                docker rm juice-shop || true
-                            fi
-                        '''
-                    }
+                        if [ $(docker ps -q -f name=zap) ]; then
+                            docker stop zap || true
+                            docker rm zap || true
+                        fi
+                        
+                        if [ $(docker ps -q -f name=juice-shop) ]; then
+                            docker stop juice-shop || true
+                            docker rm juice-shop || true
+                        fi
+                    '''
                 }
             }
         }
