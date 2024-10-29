@@ -15,13 +15,57 @@ pipeline {
         stage('Prepare') {
             steps {
                 sh 'mkdir -p results/ .zap/' // Tworzenie katalogów na wyniki i konfigurację ZAP
+                // Kopiowanie pliku passive.yaml do katalogu .zap, jeśli nie istnieje
+                script {
+                    def passiveFile = "${WORKSPACE}/.zap/passive.yaml"
+                    if (!fileExists(passiveFile)) {
+                        writeFile file: passiveFile, text: """
+                          env:
+                            contexts:
+                              - name: test-context
+                                urls:
+                                  - "http://host.docker.internal:3000/"
+                                includePaths:
+                                  - "http://host.docker.internal:3000/.*"
+                            parameters:
+                              failOnError: true
+                              failOnWarning: false
+                              progressToStdout: true
+                          jobs:
+                            - type: alertFilter
+                              alertFilters:
+                                - ruleId: 10020
+                                  newRisk: "Info"
+                            - type: passiveScan-config
+                              parameters:
+                                maxAlertsPerRule: 10
+                                scanOnlyInScope: true
+                            - type: spider
+                            - type: spiderAjax
+                            - type: passiveScan-wait
+                              parameters:
+                                maxDuration: 5
+                            - type: report
+                              parameters:
+                                template: traditional-html
+                                reportDir: /zap/wrk/reports
+                                reportFile: zap_html_report
+                                reportTitle: "ZAP Passive Scan Report"
+                            - type: report
+                              parameters:
+                                template: traditional-xml
+                                reportDir: /zap/wrk/reports
+                                reportFile: zap_xml_report
+                                reportTitle: "ZAP Passive Scan Report"
+                        """
+                    }
+                }
             }
         }
         stage('Check for passive.yaml') {
             steps {
                 script {
-                    // Sprawdzenie, czy plik passive.yaml istnieje
-                    def passiveFileExists = fileExists "${WORKSPACE}/.zap/passive.yaml"
+                    def passiveFileExists = fileExists("${WORKSPACE}/.zap/passive.yaml")
                     if (!passiveFileExists) {
                         error "Błąd: Plik passive.yaml nie został znaleziony w katalogu ${WORKSPACE}/.zap/"
                     } else {
@@ -41,26 +85,25 @@ pipeline {
                         sleep 50
                     '''
                     
-                    // Uruchomienie ZAP z odpowiednią konfiguracją
+                    // Debugowanie - sprawdzenie zawartości katalogu /zap/wrk/
+                    // oraz uruchomienie ZAP z odpowiednią konfiguracją
                     sh '''
                         docker run --name zap \
                             --add-host=host.docker.internal:host-gateway \
                             -v "${WORKSPACE}/.zap:/zap/wrk/:rw" \
                             -t ghcr.io/zaproxy/zaproxy:stable bash -c \
-                            "zap.sh -cmd -addonupdate; zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /zap/wrk/passive.yaml" || true
+                            "ls -la /zap/wrk/; zap.sh -cmd -addonupdate; zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /zap/wrk/passive.yaml" || true
                     '''
                 }
             }
             post {
                 always {
                     script {
-                        // Sprawdzenie, czy raporty zostały wygenerowane
                         def reportGenerated = sh(
                             script: 'docker exec zap bash -c "[ -f /zap/wrk/reports/zap_html_report.html ] && [ -f /zap/wrk/reports/zap_xml_report.xml ]"',
                             returnStatus: true
                         ) == 0
                         
-                        // Kopiowanie raportów, jeśli są dostępne
                         if (reportGenerated) {
                             sh '''
                                 echo "Kopiowanie raportów z kontenera ZAP do workspace..."
@@ -71,17 +114,12 @@ pipeline {
                             echo "Błąd: raporty ZAP nie zostały znalezione."
                         }
                         
-                        // Zatrzymywanie i usuwanie kontenerów
                         sh '''
                             echo "Zatrzymywanie i usuwanie kontenerów..."
-                            
-                            # Sprawdzenie, czy kontener zap jest aktywny przed jego zatrzymaniem i usunięciem
                             if [ $(docker ps -q -f name=zap) ]; then
                                 docker stop zap || true
                                 docker rm zap || true
                             fi
-                            
-                            # Sprawdzenie, czy kontener juice-shop jest aktywny przed jego zatrzymaniem i usunięciem
                             if [ $(docker ps -q -f name=juice-shop) ]; then
                                 docker stop juice-shop || true
                                 docker rm juice-shop || true
