@@ -15,49 +15,18 @@ pipeline {
         stage('Prepare') {
             steps {
                 sh 'mkdir -p results/ .zap/' // Tworzenie katalogów na wyniki i konfigurację ZAP
-                // Kopiowanie pliku passive.yaml do katalogu .zap, jeśli nie istnieje
                 script {
-                    def passiveFile = "${WORKSPACE}/.zap/passive.yaml"
-                    if (!fileExists(passiveFile)) {
-                        writeFile file: passiveFile, text: """
-                          env:
-                            contexts:
-                              - name: test-context
-                                urls:
-                                  - "http://host.docker.internal:3000/"
-                                includePaths:
-                                  - "http://host.docker.internal:3000/.*"
-                            parameters:
-                              failOnError: true
-                              failOnWarning: false
-                              progressToStdout: true
-                          jobs:
-                            - type: alertFilter
-                              alertFilters:
-                                - ruleId: 10020
-                                  newRisk: "Info"
-                            - type: passiveScan-config
-                              parameters:
-                                maxAlertsPerRule: 10
-                                scanOnlyInScope: true
-                            - type: spider
-                            - type: spiderAjax
-                            - type: passiveScan-wait
-                              parameters:
-                                maxDuration: 5
-                            - type: report
-                              parameters:
-                                template: traditional-html
-                                reportDir: /zap/wrk/reports
-                                reportFile: zap_html_report
-                                reportTitle: "ZAP Passive Scan Report"
-                            - type: report
-                              parameters:
-                                template: traditional-xml
-                                reportDir: /zap/wrk/reports
-                                reportFile: zap_xml_report
-                                reportTitle: "ZAP Passive Scan Report"
-                        """
+                    // Ścieżka do pliku passive.yaml na komputerze lokalnym
+                    def localPassiveFile = '/Users/mariusz/Documents/DevSecOps/Test/passive.yaml'
+                    def workspacePassiveFile = "${WORKSPACE}/.zap/passive.yaml"
+                    
+                    // Sprawdzenie, czy plik istnieje w podanej ścieżce lokalnej
+                    if (fileExists(localPassiveFile)) {
+                        // Kopiowanie pliku passive.yaml z lokalnego katalogu do ${WORKSPACE}/.zap/
+                        sh "cp ${localPassiveFile} ${workspacePassiveFile}"
+                        echo "Plik passive.yaml skopiowany z lokalnej ścieżki do ${WORKSPACE}/.zap/"
+                    } else {
+                        error "Błąd: Plik passive.yaml nie został znaleziony w lokalnej ścieżce ${localPassiveFile}"
                     }
                 }
             }
