@@ -14,7 +14,7 @@ pipeline {
         }
         stage('Prepare') {
             steps {
-                sh 'mkdir -p results/ .zap/' // Tworzymy katalog, jeśli nie istnieje
+                sh 'mkdir -p results/ .zap/' // Tworzenie katalogów na wyniki i konfigurację ZAP
             }
         }
         stage('Check for passive.yaml') {
@@ -74,8 +74,18 @@ pipeline {
                         // Zatrzymywanie i usuwanie kontenerów
                         sh '''
                             echo "Zatrzymywanie i usuwanie kontenerów..."
-                            docker stop zap juice-shop
-                            docker rm zap juice-shop
+                            
+                            # Sprawdzenie, czy kontener zap jest aktywny przed jego zatrzymaniem i usunięciem
+                            if [ $(docker ps -q -f name=zap) ]; then
+                                docker stop zap || true
+                                docker rm zap || true
+                            fi
+                            
+                            # Sprawdzenie, czy kontener juice-shop jest aktywny przed jego zatrzymaniem i usunięciem
+                            if [ $(docker ps -q -f name=juice-shop) ]; then
+                                docker stop juice-shop || true
+                                docker rm juice-shop || true
+                            fi
                         '''
                     }
                 }
