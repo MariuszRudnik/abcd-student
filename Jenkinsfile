@@ -22,7 +22,7 @@ pipeline {
                 sh '''
                     docker rm -f zap || true
                     docker run --name zap \
-                    -v /Users/mariusz/Documents/DevSecOps/Test/.zap:/zap/wrk/:rw \
+                    -v /Users/mariusz/Documents/DevSecOps/Test/:/zap/wrk/:rw \
                     -t ghcr.io/zaproxy/zaproxy:stable bash -c \
                     "zap.sh -cmd -addonupdate; zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /zap/wrk/passive.yaml" || true
                 '''
