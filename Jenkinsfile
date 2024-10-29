@@ -9,7 +9,7 @@ pipeline {
                 sh 'mkdir -p results/'
             }
         }
-        
+
         stage('DAST') {
             steps {
                 sh '''
@@ -20,26 +20,29 @@ pipeline {
                 '''
                 sh 'sleep 15'
                 sh '''
+                    docker rm -f zap || true
                     docker run --name zap \
                     -v /Users/mariusz/Documents/DevSecOps/Test/.zap:/zap/wrk/:rw \
                     -t ghcr.io/zaproxy/zaproxy:stable bash -c \
                     "zap.sh -cmd -addonupdate; zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /zap/wrk/passive.yaml" || true
                 '''
+                sh 'sleep 15'
+                sh 'docker logs zap'
             }
             post {
                 always {
                     script {
-                        if (fileExists('/zap/wrk/reports/zap_html_report.html')) {
+                        try {
                             sh 'docker cp zap:/zap/wrk/reports/zap_html_report.html ${WORKSPACE}/results/zap_html_report.html'
-                        }
-                        if (fileExists('/zap/wrk/reports/zap_xml_report.xml')) {
                             sh 'docker cp zap:/zap/wrk/reports/zap_xml_report.xml ${WORKSPACE}/results/zap_xml_report.xml'
+                        } catch (Exception e) {
+                            echo 'Failed to copy reports from the zap container.'
                         }
                     }
                 }
             }
         }
-        
+
         stage('Cleanup') {
             steps {
                 sh '''
@@ -52,6 +55,7 @@ pipeline {
         always {
             echo 'Archiving results...'
             archiveArtifacts artifacts: 'results/**/*.html', fingerprint: true, allowEmptyArchive: true
+            sh 'ls -la results/' // dodatkowa linia do sprawdzenia czy są jakieś pliki
             script {
                 if (fileExists('results/zap_xml_report.xml')) {
                     echo 'Sending reports to DefectDojo...'
