@@ -14,7 +14,20 @@ pipeline {
         }
         stage('Prepare') {
             steps {
-                sh 'mkdir -p results/'
+                sh 'mkdir -p results/ .zap/' // Tworzymy katalog, jeśli nie istnieje
+            }
+        }
+        stage('Check for passive.yaml') {
+            steps {
+                script {
+                    // Sprawdzenie, czy plik passive.yaml istnieje
+                    def passiveFileExists = fileExists "${WORKSPACE}/.zap/passive.yaml"
+                    if (!passiveFileExists) {
+                        error "Błąd: Plik passive.yaml nie został znaleziony w katalogu ${WORKSPACE}/.zap/"
+                    } else {
+                        echo "Plik passive.yaml został znaleziony."
+                    }
+                }
             }
         }
         stage('[ZAP] Baseline passive-scan') {
