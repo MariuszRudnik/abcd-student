@@ -24,7 +24,7 @@ pipeline {
                         docker run --name juice-shop -d --rm -p 3000:3000 bkimminich/juice-shop
                     '''
                     echo "Juice Shop is running. Waiting for 20 seconds..."
-                    sleep(5)
+                    sleep(20)
                     
                     echo "Stopping Juice Shop container..."
                     sh 'docker stop juice-shop'
@@ -38,10 +38,11 @@ pipeline {
                 script {
                     echo "Checking if package-lock.json exists in the Jenkins workspace..."
                     sh '''
-                        if [ -f "${WORKSPACE}/package-lock.json" ]; then
+                        if [ -f "/var/jenkins_home/workspace/osv-scanner/package-lock.json" ]; then
                             echo "package-lock.json exists in the Jenkins workspace."
                         else
                             echo "package-lock.json does NOT exist in the Jenkins workspace."
+                            exit 1
                         fi
                     '''
                 }
@@ -53,7 +54,7 @@ pipeline {
                 script {
                     echo "Running OSV Scanner on package-lock.json..."
                     sh '''
-                        osv-scanner scan --lockfile ${WORKSPACE}/package-lock.json > ${WORKSPACE}/results.txt
+                        osv-scanner scan --lockfile /var/jenkins_home/workspace/osv-scanner/package-lock.json > /var/jenkins_home/workspace/osv-scanner/results.txt
                     '''
                     echo "OSV Scanner has finished scanning. Results saved to results.txt."
                 }
