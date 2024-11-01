@@ -23,7 +23,8 @@ pipeline {
             steps {
                 script {
                     echo "Installing dependencies to generate package-lock.json..."
-                    sh 'npm install' // Wygenerowanie package-lock.json w workspace
+                    // Wygenerowanie package-lock.json w workspace
+                    sh 'npm install --prefix ~/Documents/DevSecOps/Test/workspace/osv-scanner@tmp'
                     echo "package-lock.json generated successfully."
                 }
             }
@@ -57,8 +58,8 @@ pipeline {
             steps {
                 script {
                     echo "Running OSV-Scanner on package-lock.json on host..."
-                    // Uruchom OSV-Scanner na hoście na wygenerowanym pliku
-                    sh '/usr/local/bin/osv-scanner --lockfile=./package-lock.json > ./osv-scan-report.json'
+                    // Uruchom OSV-Scanner na hoście, wskazując bezpośrednią ścieżkę do package-lock.json
+                    sh '/usr/local/bin/osv-scanner --lockfile=~/Documents/DevSecOps/Test/workspace/osv-scanner@tmp/package-lock.json > ./osv-scan-report.json'
 
                     echo "Checking if /Documents/DevSecOps/Test/osv directory exists..."
                     // Sprawdź, czy katalog istnieje, i utwórz go tylko w razie potrzeby
