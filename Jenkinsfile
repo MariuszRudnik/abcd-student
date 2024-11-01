@@ -33,15 +33,15 @@ pipeline {
             }
         }
 
-        stage('Step 3: Check for package-lock.json') {
+        stage('Step 3: Check for package-lock.json in Jenkins Workspace') {
             steps {
                 script {
-                    echo "Checking if package-lock.json exists in /Users/mariusz/Documents/DevSecOps/Test/workspace/osv-scanner..."
+                    echo "Checking if package-lock.json exists in the Jenkins workspace..."
                     sh '''
-                        if [ -f /Users/mariusz/Documents/DevSecOps/Test/workspace/osv-scanner/package-lock.json ]; then
-                            echo "package-lock.json exists in the specified directory."
+                        if [ -f "${WORKSPACE}/package-lock.json" ]; then
+                            echo "package-lock.json exists in the Jenkins workspace."
                         else
-                            echo "package-lock.json does NOT exist in the specified directory."
+                            echo "package-lock.json does NOT exist in the Jenkins workspace."
                         fi
                     '''
                 }
