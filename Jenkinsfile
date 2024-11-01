@@ -36,9 +36,9 @@ pipeline {
         stage('Step 3: Check for package-lock.json') {
             steps {
                 script {
-                    echo "Checking if package-lock.json exists in ~/Documents/DevSecOps/Test/workspace/osv-scanner..."
+                    echo "Checking if package-lock.json exists in /Users/mariusz/Documents/DevSecOps/Test/workspace/osv-scanner..."
                     sh '''
-                        if [ -f ~/Documents/DevSecOps/Test/workspace/osv-scanner/package-lock.json ]; then
+                        if [ -f /Users/mariusz/Documents/DevSecOps/Test/workspace/osv-scanner/package-lock.json ]; then
                             echo "package-lock.json exists in the specified directory."
                         else
                             echo "package-lock.json does NOT exist in the specified directory."
