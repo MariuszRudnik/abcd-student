@@ -23,8 +23,8 @@ pipeline {
                     sh '''
                         docker run --name juice-shop -d --rm -p 3000:3000 bkimminich/juice-shop
                     '''
-                    echo "Juice Shop is running. Waiting for 20 seconds..."
-                    sleep(20)
+                    echo "Juice Shop is running. Waiting for 5 seconds..."
+                    sleep(5)
                     
                     echo "Stopping Juice Shop container..."
                     sh 'docker stop juice-shop'
@@ -42,8 +42,20 @@ pipeline {
                             echo "package-lock.json exists in the Jenkins workspace."
                         else
                             echo "package-lock.json does NOT exist in the Jenkins workspace."
+                            exit 1
                         fi
                     '''
+                }
+            }
+        }
+
+        stage('Step 4: Run OSV-Scanner on package-lock.json') {
+            steps {
+                script {
+                    echo "Running OSV-Scanner on package-lock.json..."
+                    // Użycie pełnej ścieżki do osv-scanner i wskazanie package-lock.json
+                    sh '/usr/local/bin/osv-scanner --lockfile="${WORKSPACE}/package-lock.json" > "${WORKSPACE}/osv-scan-report.json"'
+                    echo "OSV-Scanner report generated at ${WORKSPACE}/osv-scan-report.json."
                 }
             }
         }
