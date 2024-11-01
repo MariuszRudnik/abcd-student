@@ -77,4 +77,12 @@ pipeline {
             }
         }
     }
+    post {
+        always {
+            defectDojoPublisher(artifact: '/var/jenkins_home/workspace/osv-scanner/results.txt', 
+                productName: 'Juice Shop', 
+                scanType: 'OSV Scanner', 
+                engagementName: 'mario360x@gmail.com')
+        }
+    }
 }
