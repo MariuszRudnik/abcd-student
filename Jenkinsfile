@@ -49,6 +49,15 @@ pipeline {
             }
         }
 
+        stage('Step 3.5: List Workspace Contents for Verification') {
+            steps {
+                script {
+                    echo "Listing contents of the Jenkins workspace for verification..."
+                    sh 'ls -al ${WORKSPACE}'
+                }
+            }
+        }
+
         stage('Step 4: Run OSV-Scanner in Docker') {
             steps {
                 script {
