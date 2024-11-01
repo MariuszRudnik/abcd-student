@@ -3,94 +3,52 @@ pipeline {
     options {
         skipDefaultCheckout(true)
     }
+
     stages {
-        stage('Code checkout from GitHub') {
+        stage('Step 1: Code Checkout') {
             steps {
                 script {
                     cleanWs()
-                    git credentialsId: 'devsecops', url: 'https://github.com/MariuszRudnik/abcd-student', branch: 'ZAP'
+                    echo "Cloning the GitHub repository from branch ZAP..."
+                    git credentialsId: 'github-pat', url: 'https://github.com/MariuszRudnik/abcd-student', branch: 'ZAP'
+                    echo "Code cloned successfully."
                 }
             }
-        }
-        stage('Prepare') {
-            steps {
-                sh 'mkdir -p results/ .zap/' // Tworzenie katalogów na wyniki i konfigurację ZAP
             }
-        }
-        stage('Check for passive.yaml') {
+
+        stage('Step 1.5: Check for passive.yaml File') {
             steps {
                 script {
-                    // Sprawdzenie, czy plik passive.yaml istnieje
-                    def passiveFileExists = fileExists "${WORKSPACE}/.zap/passive.yaml"
-                    if (!passiveFileExists) {
-                        error "Błąd: Plik passive.yaml nie został znaleziony w katalogu ${WORKSPACE}/.zap/"
-                    } else {
-                        echo "Plik passive.yaml został znaleziony."
-                    }
-                }
-            }
-        }
-        stage('[ZAP] Baseline passive-scan') {
-            steps {
-                script {
-                    // Uruchomienie Juice Shop
+                    echo "Checking if passive.yaml exists in the Jenkins workspace..."
                     sh '''
-                        docker run --name juice-shop -d --rm \
-                            -p 3000:3000 bkimminich/juice-shop
-                        echo "Juice Shop uruchomiony, czekam na pełne załadowanie..."
-                        sleep 50
+                        if [ -f "/var/jenkins_home/workspace/zap/passive.yaml" ]; then
+                            echo "passive.yaml exists in the Jenkins workspace."
+                        else
+                            echo "passive.yaml does NOT exist in the Jenkins workspace."
+                            exit 1
+                        fi
                     '''
+                }
+            }
+        }
+
+}
+
+        stage('Step 2: Run Juice Shop Container') {
+            steps {
+                script {
+                    echo "Starting Juice Shop container..."
+                    sh '''
+                        docker run --name juice-shop -d --rm -p 3000:3000 bkimminich/juice-shop
+                    '''
+                    echo "Juice Shop is running. Waiting for 50 seconds..."
+                    sleep(50)
                     
-                    // Uruchomienie ZAP z odpowiednią konfiguracją
-                    sh '''
-                        docker run --name zap \
-                            --add-host=host.docker.internal:host-gateway \
-                            -v "${WORKSPACE}/.zap:/zap/wrk/:rw" \
-                            -t ghcr.io/zaproxy/zaproxy:stable bash -c \
-                            "zap.sh -cmd -addonupdate; zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /zap/wrk/passive.yaml" || true
-                    '''
+                    echo "Stopping Juice Shop container..."
+                    sh 'docker stop juice-shop'
+                    echo "Juice Shop container stopped."
                 }
             }
-        }
-        stage('Copy ZAP Reports') {
-            steps {
-                script {
-                    // Kopiowanie raportów z kontenera ZAP do katalogu `results` w Jenkins
-                    sh '''
-                        echo "Kopiowanie raportów z kontenera ZAP do workspace..."
-                        docker cp zap:/zap/wrk/reports/zap_html_report.html "${WORKSPACE}/results/zap_html_report.html" || echo "Nie znaleziono zap_html_report.html"
-                        docker cp zap:/zap/wrk/reports/zap_xml_report.xml "${WORKSPACE}/results/zap_xml_report.xml" || echo "Nie znaleziono zap_xml_report.xml"
-                    '''
-                }
-            }
-        }
-        stage('Clean up Containers') {
-            steps {
-                script {
-                    // Zatrzymywanie i usuwanie kontenerów
-                    sh '''
-                        echo "Zatrzymywanie i usuwanie kontenerów..."
-                        
-                        if [ $(docker ps -q -f name=zap) ]; then
-                            docker stop zap || true
-                            docker rm zap || true
-                        fi
-                        
-                        if [ $(docker ps -q -f name=juice-shop) ]; then
-                            docker stop juice-shop || true
-                            docker rm juice-shop || true
-                        fi
-                    '''
-                }
-            }
-        }
-    }
-    post {
-        always {
-            echo 'Archiving results'
-            archiveArtifacts artifacts: 'results/**/*', fingerprint: true, allowEmptyArchive: true
-            echo 'Sending reports to DefectDojo'
-            defectDojoPublisher(artifact: 'results/zap_xml_report.xml', productName: 'Juice Shop', scanType: 'ZAP Scan', engagementName: 'mario360x@gmail.com')
         }
     }
 }
