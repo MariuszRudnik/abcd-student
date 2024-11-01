@@ -49,12 +49,13 @@ pipeline {
             }
         }
 
-        stage('Step 4: Run OSV-Scanner on package-lock.json') {
+        stage('Step 4: Run OSV-Scanner in Docker') {
             steps {
                 script {
-                    echo "Running OSV-Scanner on package-lock.json..."
-                    // Użycie pełnej ścieżki do osv-scanner i wskazanie package-lock.json
-                    sh '/usr/local/bin/osv-scanner --lockfile="${WORKSPACE}/package-lock.json" > "${WORKSPACE}/osv-scan-report.json"'
+                    echo "Running OSV-Scanner on package-lock.json using Docker..."
+                    sh '''
+                        docker run --rm -v ${WORKSPACE}:/scan openvex/osv-scanner --lockfile=/scan/package-lock.json > ${WORKSPACE}/osv-scan-report.json
+                    '''
                     echo "OSV-Scanner report generated at ${WORKSPACE}/osv-scan-report.json."
                 }
             }
