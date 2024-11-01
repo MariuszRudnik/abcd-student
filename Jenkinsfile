@@ -81,7 +81,7 @@ pipeline {
         always {
             defectDojoPublisher(artifact: '/var/jenkins_home/workspace/osv-scanner/results.json',
                 productName: 'Juice Shop',
-                scanType: 'NPM Audit', 
+                scanType: 'OSV Scan', 
                 engagementName: 'mario360x@gmail.com')
         }
     }
