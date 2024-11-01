@@ -22,6 +22,17 @@ pipeline {
         stage('Step 2: Prepare Juice Shop Application for Testing') {
             steps {
                 script {
+                    echo "Checking if Juice Shop container is already running..."
+                    // Usuń istniejący kontener, jeśli działa
+                    sh '''
+                        if [ "$(docker ps -q -f name=juice-shop)" ]; then
+                            echo "Stopping and removing existing Juice Shop container..."
+                            docker stop juice-shop
+                        else
+                            echo "No existing Juice Shop container running."
+                        fi
+                    '''
+
                     echo "Starting Juice Shop application..."
                     sh '''
                         docker run --name juice-shop -d --rm -p 3000:3000 bkimminich/juice-shop
