@@ -48,21 +48,13 @@ pipeline {
             }
         }
 
-        stage('Step 4: Run osv-scanner and Check Version') {
+        stage('Step 4: Run osv-scanner in Docker Container') {
             steps {
                 script {
-                    echo "Running osv-scanner to check version..."
+                    echo "Running osv-scanner in Docker container..."
                     sh '''
-                        export PATH=$PATH:/go/bin
-
-                        if ! command -v /full/path/to/osv-scanner &> /dev/null
-                        then
-                            echo "osv-scanner could not be found, please install it first."
-                            exit 1
-                        fi
-
-                        echo "osv-scanner version:"
-                        /full/path/to/osv-scanner --version
+                        docker run --rm -v ${WORKSPACE}:/workspace -w /workspace ghcr.io/google/osv-scanner:latest --version
+                        docker run --rm -v ${WORKSPACE}:/workspace -w /workspace ghcr.io/google/osv-scanner:latest --json > osv_scan_results.json
                     '''
                 }
             }
