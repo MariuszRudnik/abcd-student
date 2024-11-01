@@ -14,14 +14,14 @@ pipeline {
                     echo "Code cloned successfully."
                 }
             }
-            }
+        }
 
         stage('Step 1.5: Check for passive.yaml File') {
             steps {
                 script {
                     echo "Checking if passive.yaml exists in the Jenkins workspace..."
                     sh '''
-                        if [ -f "/var/jenkins_home/workspace/zap/passive.yaml" ]; then
+                        if [ -f "${WORKSPACE}/zap/passive.yaml" ]; then
                             echo "passive.yaml exists in the Jenkins workspace."
                         else
                             echo "passive.yaml does NOT exist in the Jenkins workspace."
@@ -31,8 +31,6 @@ pipeline {
                 }
             }
         }
-
-}
 
         stage('Step 2: Run Juice Shop Container') {
             steps {
