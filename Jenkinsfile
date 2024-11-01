@@ -47,5 +47,23 @@ pipeline {
                 }
             }
         }
+
+        stage('Step 4: Run osv-scanner and Check Version') {
+            steps {
+                script {
+                    echo "Running osv-scanner to check version..."
+                    sh '''
+                        if ! command -v osv-scanner &> /dev/null
+                        then
+                            echo "osv-scanner could not be found, please install it first."
+                            exit 1
+                        fi
+
+                        echo "osv-scanner version:"
+                        osv-scanner --version
+                    '''
+                }
+            }
+        }
     }
 }
