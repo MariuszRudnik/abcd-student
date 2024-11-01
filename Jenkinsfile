@@ -16,6 +16,16 @@ pipeline {
             }
         }
 
+        stage('Step 1.5: Generate package-lock.json') {
+            steps {
+                script {
+                    echo "Running npm install to generate package-lock.json..."
+                    sh 'npm install --prefix ${WORKSPACE}'
+                    echo "package-lock.json generated successfully in the Jenkins workspace."
+                }
+            }
+        }
+
         stage('Step 2: Run Juice Shop Container') {
             steps {
                 script {
@@ -36,24 +46,15 @@ pipeline {
         stage('Step 3: Check for package-lock.json in Jenkins Workspace') {
             steps {
                 script {
-                    echo "Checking if package-lock.json exists in the Jenkins workspace..."
+                    echo "Checking if package-lock.json exists in the specified directory..."
                     sh '''
-                        if [ -f "${WORKSPACE}/package-lock.json" ]; then
-                            echo "package-lock.json exists in the Jenkins workspace."
+                        if [ -f "/Documents/DevSecOps/Test/workspace/osv-scanner/package-lock.json" ]; then
+                            echo "package-lock.json exists in the specified directory."
                         else
-                            echo "package-lock.json does NOT exist in the Jenkins workspace."
+                            echo "package-lock.json does NOT exist in the specified directory."
                             exit 1
                         fi
                     '''
-                }
-            }
-        }
-
-        stage('Step 3.5: List Workspace Contents for Verification') {
-            steps {
-                script {
-                    echo "Listing contents of the Jenkins workspace for verification..."
-                    sh 'ls -al ${WORKSPACE}'
                 }
             }
         }
@@ -63,9 +64,9 @@ pipeline {
                 script {
                     echo "Running OSV-Scanner on package-lock.json using Docker..."
                     sh '''
-                        docker run --rm -v ${WORKSPACE}:/scan ghcr.io/google/osv-scanner --lockfile=/scan/package-lock.json > ${WORKSPACE}/osv-scan-report.json
+                        docker run --rm -v /Documents/DevSecOps/Test/workspace/osv-scanner:/scan ghcr.io/google/osv-scanner --lockfile=/scan/package-lock.json > /Documents/DevSecOps/Test/workspace/osv-scanner/osv-scan-report.json
                     '''
-                    echo "OSV-Scanner report generated at ${WORKSPACE}/osv-scan-report.json."
+                    echo "OSV-Scanner report generated at /Documents/DevSecOps/Test/workspace/osv-scanner/osv-scan-report.json."
                 }
             }
         }
