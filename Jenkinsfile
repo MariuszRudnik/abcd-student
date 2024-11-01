@@ -55,14 +55,14 @@ pipeline {
                     sh '''
                         export PATH=$PATH:/go/bin
 
-                        if ! command -v osv-scanner &> /dev/null
+                        if ! command -v /full/path/to/osv-scanner &> /dev/null
                         then
                             echo "osv-scanner could not be found, please install it first."
                             exit 1
                         fi
 
                         echo "osv-scanner version:"
-                        osv-scanner --version
+                        /full/path/to/osv-scanner --version
                     '''
                 }
             }
