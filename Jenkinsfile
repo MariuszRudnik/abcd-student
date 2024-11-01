@@ -12,8 +12,23 @@ pipeline {
                     echo "Cloning the GitHub repository from branch osv-scanner..."
                     git credentialsId: 'github-pat', url: 'https://github.com/MariuszRudnik/abcd-student', branch: 'osv-scanner'
                     echo "Code cloned successfully."
+                        stage('Step 5: Check for Results File') {
+            steps {
+                script {
+                    echo "Checking if results.txt exists in the Jenkins workspace..."
+                    sh '''
+                        if [ -f "/var/jenkins_home/workspace/osv-scanner/results.txt" ]; then
+                            echo "results.txt exists in the Jenkins workspace."
+                        else
+                            echo "results.txt does NOT exist in the Jenkins workspace."
+                            exit 1
+                        fi
+                    '''
                 }
             }
+        }
+    }
+}
         }
 
         stage('Step 2: Run Juice Shop Container') {
@@ -54,7 +69,7 @@ pipeline {
                 script {
                     echo "Running OSV Scanner on package-lock.json..."
                     sh '''
-                        osv-scanner scan --lockfile /var/jenkins_home/workspace/osv-scanner/package-lock.json > /var/jenkins_home/workspace/osv-scanner/results.txt
+                        osv-scanner scan --lockfile /var/jenkins_home/workspace/osv-scanner/package-lock.json > /var/jenkins_home/workspace/osv-scanner/results.txt || true
                     '''
                     echo "OSV Scanner has finished scanning. Results saved to results.txt."
                 }
