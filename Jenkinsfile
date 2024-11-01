@@ -32,54 +32,35 @@ pipeline {
             }
         }
 
-        stage('Step 3: Run OSV-Scanner for Vulnerability Scanning') {
+        stage('Step 3: Scan Juice Shop Container with OSV-Scanner') {
             steps {
                 script {
-                    echo "Running OSV-Scanner as a Docker container..."
+                    echo "Copying package-lock.json from the juice-shop container..."
+                    // Skopiuj plik package-lock.json z kontenera
+                    sh 'docker cp juice-shop:/app/package-lock.json ./package-lock.json'
+
+                    echo "Running OSV-Scanner on package-lock.json..."
+                    // Uruchom OSV-Scanner i zapisz wynik w pliku
+                    sh 'osv-scanner --lockfile=./package-lock.json > ./osv-scan-report.json'
+
+                    echo "Checking if /Documents/DevSecOps/Test/osv directory exists..."
+                    // Sprawdź, czy katalog istnieje, i utwórz go tylko w razie potrzeby
                     sh '''
-                        docker run --rm -v ${WORKSPACE}:/workspace:ro gcr.io/osv-scanner/osv-scanner --output osv_scan_report.json --path /workspace
+                        if [ ! -d "/Documents/DevSecOps/Test/osv" ]; then
+                            echo "Directory does not exist. Creating it..."
+                            mkdir -p /Documents/DevSecOps/Test/osv
+                        else
+                            echo "Directory already exists. Skipping creation."
+                        fi
                     '''
-                    echo "OSV-Scanner scan completed. Waiting for 5 seconds..."
-                    sleep(5)
+
+                    echo "Saving OSV scan report to /Documents/DevSecOps/Test/osv..."
+                    // Przenieś raport do wskazanej lokalizacji
+                    sh 'cp ./osv-scan-report.json /Documents/DevSecOps/Test/osv/osv-scan-report.json'
+
+                    echo "OSV scan report saved successfully."
                 }
             }
-        }
-
-        stage('Step 4: Verify and Archive Scan Results') {
-            steps {
-                echo "Verifying OSV-Scanner scan results..."
-                sh 'ls -al ${WORKSPACE}'
-                echo "Archiving OSV-Scanner scan results..."
-                archiveArtifacts artifacts: 'osv_scan_report.json', fingerprint: true, allowEmptyArchive: true
-                echo "Scan results archived. Waiting for 5 seconds..."
-                sleep(5)
-            }
-        }
-    }
-
-    post {
-        always {
-            script {
-                echo "Cleaning up Docker containers..."
-                sh '''
-                    docker stop juice-shop || true
-                    docker rm juice-shop || true
-                '''
-                echo "Containers stopped and removed."
-
-                echo "Checking if OSV-Scanner report exists..."
-                if (fileExists('${WORKSPACE}/osv_scan_report.json')) {
-                    echo "Sending OSV-Scanner report to DefectDojo..."
-                    defectDojoPublisher(artifact: '${WORKSPACE}/osv_scan_report.json',
-                                        productName: 'Juice Shop',
-                                        scanType: 'OSV-Scan',
-                                        engagementName: 'mario360x@gmail.com')
-                } else {
-                    echo "OSV-Scanner report not found, skipping DefectDojo upload."
-                }
-            }
-
-            archiveArtifacts artifacts: '**/*', fingerprint: true, allowEmptyArchive: true
         }
     }
 }
