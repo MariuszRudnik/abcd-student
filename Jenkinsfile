@@ -53,15 +53,12 @@ pipeline {
                 script {
                     echo "Running osv-scanner in Docker container..."
                     sh '''
-                        # Define the path to the package-lock.json file
-                        PACKAGE_LOCK_PATH=~/Documents/DevSecOps/Test/workspace/osv-scanner/package-lock.json
-
-                        # Debugging step to list files in the specified directory
-                        ls -l ~/Documents/DevSecOps/Test/workspace/osv-scanner
+                        # Debugging step to list files in the workspace
+                        ls -l ${WORKSPACE}
 
                         # Run osv-scanner with appropriate arguments
-                        docker run --rm -v ~/Documents/DevSecOps/Test/workspace/osv-scanner:/workspace -w /workspace ghcr.io/google/osv-scanner:latest --version
-                        docker run --rm -v ~/Documents/DevSecOps/Test/workspace/osv-scanner:/workspace -w /workspace ghcr.io/google/osv-scanner:latest --json /workspace/package-lock.json > osv_scan_results.json
+                        docker run --rm -v ${WORKSPACE}:/workspace -w /workspace ghcr.io/google/osv-scanner:latest --version
+                        docker run --rm -v ${WORKSPACE}:/workspace -w /workspace ghcr.io/google/osv-scanner:latest --json /workspace/package-lock.json > ${WORKSPACE}/osv_scan_results.json
                     '''
                 }
             }
