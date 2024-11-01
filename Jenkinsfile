@@ -53,6 +53,8 @@ pipeline {
                 script {
                     echo "Running osv-scanner to check version..."
                     sh '''
+                        export PATH=$PATH:/go/bin
+
                         if ! command -v osv-scanner &> /dev/null
                         then
                             echo "osv-scanner could not be found, please install it first."
