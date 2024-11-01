@@ -43,34 +43,23 @@ pipeline {
             }
         }
 
-        stage('Step 3: Scan Juice Shop Application with OSV-Scanner') {
+        stage('Step 3: Copy package-lock.json from Container to Host') {
             steps {
                 script {
-                    echo "Checking if package-lock.json exists..."
-                    // Sprawdzenie, czy plik package-lock.json istnieje
-                    sh '''
-                        if [ ! -f "/var/jenkins_home/workspace/osv-scanner/package-lock.json" ]; then
-                            echo "Error: package-lock.json not found at /var/jenkins_home/workspace/osv-scanner/package-lock.json"
-                            exit 1
-                        else
-                            echo "package-lock.json found."
-                        fi
-                    '''
+                    echo "Copying package-lock.json from the juice-shop container..."
+                    // Skopiuj plik package-lock.json z kontenera do workspace
+                    sh 'docker cp juice-shop:/app/package-lock.json ./package-lock.json'
+                    echo "package-lock.json copied successfully."
+                }
+            }
+        }
 
-                    echo "Checking if osv-scanner is installed..."
-                    // Sprawdzenie, czy osv-scanner jest dostępny
-                    sh '''
-                        if ! command -v osv-scanner &> /dev/null; then
-                            echo "Error: osv-scanner is not installed or not in PATH."
-                            exit 1
-                        else
-                            echo "osv-scanner is available."
-                        fi
-                    '''
-
-                    echo "Running OSV-Scanner on package-lock.json..."
-                    // Uruchom OSV-Scanner i zapisz wynik w pliku
-                    sh 'osv-scanner --lockfile=/var/jenkins_home/workspace/osv-scanner/package-lock.json > ./osv-scan-report.json'
+        stage('Step 4: Run OSV-Scanner on Host') {
+            steps {
+                script {
+                    echo "Running OSV-Scanner on package-lock.json on host..."
+                    // Uruchom OSV-Scanner na hoście na skopiowanym pliku
+                    sh '/usr/local/bin/osv-scanner --lockfile=./package-lock.json > ./osv-scan-report.json'
 
                     echo "Checking if /Documents/DevSecOps/Test/osv directory exists..."
                     // Sprawdź, czy katalog istnieje, i utwórz go tylko w razie potrzeby
