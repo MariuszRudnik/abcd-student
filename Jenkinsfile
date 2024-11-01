@@ -10,7 +10,7 @@ pipeline {
                 script {
                     cleanWs()
                     echo "Cloning the GitHub repository..."
-                    git credentialsId: 'github-pat', url: 'https://github.com/MariuszRudnik/abcd-student', branch: 'main'
+                    git credentialsId: 'github-pat', url: 'https://github.com/MariuszRudnik/abcd-student', branch: 'osv-scanner'
                     echo "Code cloned. Listing workspace contents..."
                     sh 'ls -al ${WORKSPACE}'
                     echo "Waiting for 5 seconds..."
