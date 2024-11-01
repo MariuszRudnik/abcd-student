@@ -58,7 +58,7 @@ pipeline {
 
                         # Run osv-scanner with appropriate arguments
                         docker run --rm -v ${WORKSPACE}:/workspace -w /workspace ghcr.io/google/osv-scanner:latest --version
-                        docker run --rm -v ${WORKSPACE}:/workspace -w /workspace ghcr.io/google/osv-scanner:latest --json /workspace/package-lock.json > ${WORKSPACE}/osv_scan_results.json
+                        docker run --rm -v ${WORKSPACE}:/workspace -w /workspace ghcr.io/google/osv-scanner:latest --json /workspace/package-lock.json > /workspace/osv_scan_results.json
                     '''
                 }
             }
