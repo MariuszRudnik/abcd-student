@@ -16,6 +16,18 @@ pipeline {
             }
         }
 
+        stage('Step 1.5: Generate package-lock.json using Docker') {
+            steps {
+                script {
+                    echo "Running npm install in Docker to generate package-lock.json..."
+                    sh '''
+                        docker run --rm -v ${WORKSPACE}:/app -w /app node:latest npm install
+                    '''
+                    echo "package-lock.json generated successfully in the Jenkins workspace."
+                }
+            }
+        }
+
         stage('Step 2: Run Juice Shop Container') {
             steps {
                 script {
@@ -23,8 +35,8 @@ pipeline {
                     sh '''
                         docker run --name juice-shop -d --rm -p 3000:3000 bkimminich/juice-shop
                     '''
-                    echo "Juice Shop is running. Waiting for 20 seconds..."
-                    sleep(20)
+                    echo "Juice Shop is running. Waiting for 5 seconds..."
+                    sleep(5)
                     
                     echo "Stopping Juice Shop container..."
                     sh 'docker stop juice-shop'
@@ -33,33 +45,30 @@ pipeline {
             }
         }
 
-        stage('Step 3: Check for package-lock.json in Jenkins Workspace') {
+        stage('Step 3: Check for package-lock.json in Specified Directory') {
             steps {
                 script {
-                    echo "Checking if package-lock.json exists in the Jenkins workspace..."
+                    echo "Checking if package-lock.json exists in the specified directory..."
                     sh '''
                         if [ -f "${WORKSPACE}/package-lock.json" ]; then
-                            echo "package-lock.json exists in the Jenkins workspace."
+                            echo "package-lock.json exists in the specified directory."
                         else
-                            echo "package-lock.json does NOT exist in the Jenkins workspace."
+                            echo "package-lock.json does NOT exist in the specified directory."
+                            exit 1
                         fi
                     '''
                 }
             }
         }
 
-        stage('Step 4: Run osv-scanner in Docker Container') {
+        stage('Step 4: Run OSV-Scanner on Host') {
             steps {
                 script {
-                    echo "Running osv-scanner in Docker container..."
+                    echo "Running OSV-Scanner on package-lock.json and saving results to results.txt..."
                     sh '''
-                        # Debugging step to list files in the workspace
-                        ls -l ${WORKSPACE}
-
-                        # Run osv-scanner with appropriate arguments
-                        docker run --rm -v ${WORKSPACE}:/workspace -w /workspace ghcr.io/google/osv-scanner:latest --version
-                        docker run --rm -v ${WORKSPACE}:/workspace -w /workspace ghcr.io/google/osv-scanner:latest --json /workspace/package-lock.json > /workspace/osv_scan_results.json
+                        osv-scanner scan --lockfile ~/Documents/DevSecOps/Test/workspace/osv-scanner/package-lock.json > ~/Documents/DevSecOps/Test/workspace/osv-scanner/results.txt
                     '''
+                    echo "OSV-Scanner report generated at ~/Documents/DevSecOps/Test/workspace/osv-scanner/results.txt."
                 }
             }
         }
