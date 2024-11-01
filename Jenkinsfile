@@ -76,12 +76,5 @@ pipeline {
                 }
             }
         }
-        post {
-        always {
-            echo 'Archiving results'
-            archiveArtifacts artifacts: '/var/jenkins_home/workspace/osv-scanner/results.txt', fingerprint: true, allowEmptyArchive: true, fingerprint: true, allowEmptyArchive: true
-            echo 'Sending reports to DefectDojo'
-            defectDojoPublisher(artifact: '/var/jenkins_home/workspace/osv-scanner/results.txt', productName: 'Juice Shop', scanType: 'OSV Scaner', engagementName: 'mario360x@gmail.com')
-        }
     }
 }
