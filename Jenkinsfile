@@ -19,6 +19,16 @@ pipeline {
             }
         }
 
+        stage('Step 1.5: Generate package-lock.json') {
+            steps {
+                script {
+                    echo "Installing dependencies to generate package-lock.json..."
+                    sh 'npm install' // Wygenerowanie package-lock.json w workspace
+                    echo "package-lock.json generated successfully."
+                }
+            }
+        }
+
         stage('Step 2: Prepare Juice Shop Application for Testing') {
             steps {
                 script {
@@ -43,22 +53,11 @@ pipeline {
             }
         }
 
-        stage('Step 3: Copy package-lock.json from Container to Host') {
-            steps {
-                script {
-                    echo "Copying package-lock.json from the juice-shop container..."
-                    // Skopiuj plik package-lock.json z kontenera do workspace
-                    sh 'docker cp juice-shop:/app/package-lock.json ./package-lock.json'
-                    echo "package-lock.json copied successfully."
-                }
-            }
-        }
-
-        stage('Step 4: Run OSV-Scanner on Host') {
+        stage('Step 3: Run OSV-Scanner on Host') {
             steps {
                 script {
                     echo "Running OSV-Scanner on package-lock.json on host..."
-                    // Uruchom OSV-Scanner na hoście na skopiowanym pliku
+                    // Uruchom OSV-Scanner na hoście na wygenerowanym pliku
                     sh '/usr/local/bin/osv-scanner --lockfile=./package-lock.json > ./osv-scan-report.json'
 
                     echo "Checking if /Documents/DevSecOps/Test/osv directory exists..."
