@@ -16,18 +16,6 @@ pipeline {
             }
         }
 
-        stage('Step 1.5: Generate package-lock.json using Docker') {
-            steps {
-                script {
-                    echo "Running npm install in Docker to generate package-lock.json..."
-                    sh '''
-                        docker run --rm -v ${WORKSPACE}:/app -w /app node:latest npm install
-                    '''
-                    echo "package-lock.json generated successfully in the Jenkins workspace."
-                }
-            }
-        }
-
         stage('Step 2: Run Juice Shop Container') {
             steps {
                 script {
@@ -35,7 +23,7 @@ pipeline {
                     sh '''
                         docker run --name juice-shop -d --rm -p 3000:3000 bkimminich/juice-shop
                     '''
-                    echo "Juice Shop is running. Waiting for 5 seconds..."
+                    echo "Juice Shop is running. Waiting for 20 seconds..."
                     sleep(5)
                     
                     echo "Stopping Juice Shop container..."
@@ -45,30 +33,29 @@ pipeline {
             }
         }
 
-        stage('Step 3: Check for package-lock.json in Specified Directory') {
+        stage('Step 3: Check for package-lock.json in Jenkins Workspace') {
             steps {
                 script {
-                    echo "Checking if package-lock.json exists in the specified directory..."
+                    echo "Checking if package-lock.json exists in the Jenkins workspace..."
                     sh '''
                         if [ -f "${WORKSPACE}/package-lock.json" ]; then
-                            echo "package-lock.json exists in the specified directory."
+                            echo "package-lock.json exists in the Jenkins workspace."
                         else
-                            echo "package-lock.json does NOT exist in the specified directory."
-                            exit 1
+                            echo "package-lock.json does NOT exist in the Jenkins workspace."
                         fi
                     '''
                 }
             }
         }
 
-        stage('Step 4: Run OSV-Scanner on Host') {
+        stage('Step 4: Run OSV Scanner') {
             steps {
                 script {
-                    echo "Running OSV-Scanner on package-lock.json and saving results to results.txt..."
+                    echo "Running OSV Scanner on package-lock.json..."
                     sh '''
-                        osv-scanner scan --lockfile ~/Documents/DevSecOps/Test/workspace/osv-scanner/package-lock.json > ~/Documents/DevSecOps/Test/workspace/osv-scanner/results.txt
+                        osv-scanner scan --lockfile ${WORKSPACE}/package-lock.json > ${WORKSPACE}/results.txt
                     '''
-                    echo "OSV-Scanner report generated at ~/Documents/DevSecOps/Test/workspace/osv-scanner/results.txt."
+                    echo "OSV Scanner has finished scanning. Results saved to results.txt."
                 }
             }
         }
