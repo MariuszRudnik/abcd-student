@@ -10,7 +10,7 @@ pipeline {
                 script {
                     cleanWs()
                     echo "Cloning the GitHub repository..."
-                    git credentialsId: 'github-pat', url: 'https://github.com/MariuszRudnik/abcd-student', branch: 'osv-scanner'
+                    git credentialsId: 'github-pat', url: 'https://github.com/MariuszRudnik/abcd-student', branch: 'main'
                     echo "Code cloned. Listing workspace contents..."
                     sh 'ls -al ${WORKSPACE}'
                     echo "Waiting for 5 seconds..."
@@ -32,16 +32,12 @@ pipeline {
             }
         }
 
-        stage('Step 3: Scan Juice Shop Container with OSV-Scanner') {
+        stage('Step 3: Scan Juice Shop Application with OSV-Scanner') {
             steps {
                 script {
-                    echo "Copying package-lock.json from the juice-shop container..."
-                    // Skopiuj plik package-lock.json z kontenera
-                    sh 'docker cp juice-shop:/app/package-lock.json ./package-lock.json'
-
                     echo "Running OSV-Scanner on package-lock.json..."
                     // Uruchom OSV-Scanner i zapisz wynik w pliku
-                    sh 'osv-scanner --lockfile=./package-lock.json > ./osv-scan-report.json'
+                    sh 'osv-scanner --lockfile=/var/jenkins_home/workspace/osv-scanner/package-lock.json > ./osv-scan-report.json'
 
                     echo "Checking if /Documents/DevSecOps/Test/osv directory exists..."
                     // Sprawdź, czy katalog istnieje, i utwórz go tylko w razie potrzeby
