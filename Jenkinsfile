@@ -54,7 +54,7 @@ pipeline {
                 script {
                     echo "Running OSV-Scanner on package-lock.json using Docker..."
                     sh '''
-                        docker run --rm -v ${WORKSPACE}:/scan openvex/osv-scanner --lockfile=/scan/package-lock.json > ${WORKSPACE}/osv-scan-report.json
+                        docker run --rm -v ${WORKSPACE}:/scan ghcr.io/google/osv-scanner --lockfile=/scan/package-lock.json > ${WORKSPACE}/osv-scan-report.json
                     '''
                     echo "OSV-Scanner report generated at ${WORKSPACE}/osv-scan-report.json."
                 }
