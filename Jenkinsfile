@@ -21,7 +21,7 @@ pipeline {
                 script {
                     echo "Checking if passive.yaml exists in the Jenkins workspace..."
                     sh '''
-                        if [ -f "${WORKSPACE}/zap/passive.yaml" ]; then
+                        if [ -f "/var/jenkins_home/workspace/ZAP/passive.yaml" ]; then
                             echo "passive.yaml exists in the Jenkins workspace."
                         else
                             echo "passive.yaml does NOT exist in the Jenkins workspace."
