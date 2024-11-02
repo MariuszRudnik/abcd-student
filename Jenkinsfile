@@ -48,5 +48,22 @@ pipeline {
                 }
             }
         }
+
+        stage('Step 3: Run ZAP Scanner') {
+            steps {
+                script {
+                    echo "Starting ZAP container to run passive scan..."
+                    sh '''
+                        docker run --name zap \
+                            --add-host=host.docker.internal:host-gateway \
+                            -v "/var/jenkins_home/workspace/ZAP:/zap/wrk/:rw" \
+                            -t ghcr.io/zaproxy/zaproxy:stable bash -c \
+                            "zap.sh -cmd -addonupdate; zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /zap/wrk/passive.yaml" || true
+                    '''
+                    echo "ZAP scan completed."
+                }
+            }
+        }
+        }
     }
 }
