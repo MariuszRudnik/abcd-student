@@ -19,6 +19,16 @@ pipeline {
         stage('Step 1.5: Check for passive.yaml File') {
             steps {
                 script {
+                    echo "Checking if ~/Documents/DevSecOps/Test/workspace/ZAP/reports directory exists..."
+                    sh '''
+                        if [ ! -d "~/Documents/DevSecOps/Test/workspace/ZAP/reports" ]; then
+                            echo "Directory ~/Documents/DevSecOps/Test/workspace/ZAP/reports does not exist. Creating it..."
+                            mkdir -p ~/Documents/DevSecOps/Test/workspace/ZAP/reports
+                        fi
+                    '''
+                }
+
+                script {
                     echo "Checking if passive.yaml exists in the Jenkins workspace..."
                     sh '''
                         if [ -f "/var/jenkins_home/workspace/ZAP/passive.yaml" ]; then
@@ -49,47 +59,9 @@ pipeline {
             }
         }
 
-        stage('Step 3: Run ZAP Scanner') {
-            steps {
-                script {
-                    echo "Starting ZAP container to run passive scan..."
-                    sh '''
-                        docker run --name zap \
-                            --add-host=host.docker.internal:host-gateway \
-                            -v "/var/jenkins_home/workspace/ZAP:/zap/wrk/:rw" \
-                            -t ghcr.io/zaproxy/zaproxy:stable bash -c \
-                            "
-                            if [ -f /var/jenkins_home/workspace/ZAP/passive.yaml ]; then
-                                echo 'passive.yaml found in container.';
-                            else
-                                echo 'passive.yaml NOT found in container.';
-                                exit 1;
-                            fi;
-                            zap.sh -cmd -addonupdate; \
-                            zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /var/jenkins_home/workspace/ZAP/passive.yaml" || true
-                    '''
-                    echo "ZAP scan completed."
-                }
-            }
+                    }
         }
-            stage('Step 4: Copy Results') {
-            steps {
-                script {
-                    echo "Copying ZAP results to result directory..."
-                    sh '''
-                        if [ ! -d "/var/jenkins_home/workspace/ZAP/result" ]; then
-                            echo "Result directory does not exist. Creating result directory..."
-                            mkdir -p /var/jenkins_home/workspace/ZAP/result
-                        fi
-                        for item in /var/jenkins_home/workspace/ZAP/*; do
-    if [ "$(basename "$item")" != "result" ]; then
-        cp -r "$item" /var/jenkins_home/workspace/ZAP/result/
-    fi
-done
-                    '''
-                    echo "Results copied successfully."
-                }
-            }
+                        }
         }
 
 }
