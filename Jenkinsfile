@@ -26,9 +26,7 @@ pipeline {
                             mkdir -p ~/Documents/DevSecOps/Test/workspace/ZAP/reports
                         fi
                     '''
-                }
-
-                script {
+                
                     echo "Checking if passive.yaml exists in the Jenkins workspace..."
                     sh '''
                         if [ -f "/var/jenkins_home/workspace/ZAP/passive.yaml" ]; then
@@ -38,8 +36,9 @@ pipeline {
                             exit 1
                         fi
                     '''
-                }
+                                }
             }
+        }
         }
 
         stage('Step 2: Run Juice Shop Container') {
@@ -56,14 +55,11 @@ pipeline {
                     sh 'docker stop juice-shop'
                     echo "Juice Shop container stopped."
                 
-                        }
-        }
-
-}
-
+                                                        }
+            }
+            }
     post {
         always {
             echo "Pipeline execution completed."
-        }
-    }
+            }
 }
