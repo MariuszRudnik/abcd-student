@@ -36,9 +36,8 @@ pipeline {
                             exit 1
                         fi
                     '''
-                                }
+                }
             }
-        }
         }
 
         stage('Step 2: Run Juice Shop Container') {
@@ -54,12 +53,14 @@ pipeline {
                     echo "Stopping Juice Shop container..."
                     sh 'docker stop juice-shop'
                     echo "Juice Shop container stopped."
-                
-                                                        }
+                }
             }
-            }
+        }
+    }
+
     post {
         always {
             echo "Pipeline execution completed."
-            }
+        }
+    }
 }
