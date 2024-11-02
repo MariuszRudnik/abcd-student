@@ -21,9 +21,12 @@ pipeline {
                 script {
                     echo "Checking if ~/Documents/DevSecOps/Test/workspace/ZAP/reports directory exists..."
                     sh '''
-                        if [ ! -d "${HOME}/Documents/DevSecOps/Test/workspace/ZAP/reports" ]; then
-                            echo "Directory ${HOME}/Documents/DevSecOps/Test/workspace/ZAP/reports does not exist. Creating it..."
-                            mkdir -p ${HOME}/Documents/DevSecOps/Test/workspace/ZAP/reports
+                        REPORTS_DIR="${HOME}/Documents/DevSecOps/Test/workspace/ZAP/reports"
+                        if [ ! -d "$REPORTS_DIR" ]; then
+                            echo "Directory $REPORTS_DIR does not exist. Creating it..."
+                            mkdir -p "$REPORTS_DIR"
+                        else
+                            echo "Directory $REPORTS_DIR already exists."
                         fi
                     '''
                 
