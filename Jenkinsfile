@@ -58,13 +58,37 @@ pipeline {
                             --add-host=host.docker.internal:host-gateway \
                             -v "/var/jenkins_home/workspace/ZAP:/zap/wrk/:rw" \
                             -t ghcr.io/zaproxy/zaproxy:stable bash -c \
-                            "zap.sh -cmd -addonupdate; zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /zap/wrk/passive.yaml" || true
+                            "
+                            if [ -f /zap/wrk/passive.yaml ]; then
+                                echo 'passive.yaml found in container.';
+                            else
+                                echo 'passive.yaml NOT found in container.';
+                                exit 1;
+                            fi;
+                            zap.sh -cmd -addonupdate; \
+                            zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /zap/wrk/passive.yaml" || true
                     '''
                     echo "ZAP scan completed."
                 }
             }
         }
-    }
+            stage('Step 4: Copy Results') {
+            steps {
+                script {
+                    echo "Copying ZAP results to result directory..."
+                    sh '''
+                        if [ ! -d "/var/jenkins_home/workspace/ZAP/result" ]; then
+                            echo "Result directory does not exist. Creating result directory..."
+                            mkdir -p /var/jenkins_home/workspace/ZAP/result
+                        fi
+                        cp /var/jenkins_home/workspace/ZAP/* /var/jenkins_home/workspace/ZAP/result/
+                    '''
+                    echo "Results copied successfully."
+                }
+            }
+        }
+
+}
 
     post {
         always {
