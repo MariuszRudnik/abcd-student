@@ -29,6 +29,14 @@ pipeline {
                             echo "Directory $REPORTS_DIR already exists."
                         fi
                     '''
+                    
+                    echo "Verifying the created directory..."
+                    sh '''
+                        if [ ! -d "$REPORTS_DIR" ]; then
+                            echo "Failed to create directory $REPORTS_DIR. Please check permissions."
+                            exit 1
+                        fi
+                    '''
                 
                     echo "Checking if passive.yaml exists in the Jenkins workspace..."
                     sh '''
