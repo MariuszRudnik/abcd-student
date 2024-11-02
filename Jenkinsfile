@@ -59,14 +59,14 @@ pipeline {
                             -v "/var/jenkins_home/workspace/ZAP:/zap/wrk/:rw" \
                             -t ghcr.io/zaproxy/zaproxy:stable bash -c \
                             "
-                            if [ -f /zap/wrk/passive.yaml ]; then
+                            if [ -f /var/jenkins_home/workspace/ZAP/passive.yaml ]; then
                                 echo 'passive.yaml found in container.';
                             else
                                 echo 'passive.yaml NOT found in container.';
                                 exit 1;
                             fi;
                             zap.sh -cmd -addonupdate; \
-                            zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /zap/wrk/passive.yaml" || true
+                            zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /var/jenkins_home/workspace/ZAP/passive.yaml" || true
                     '''
                     echo "ZAP scan completed."
                 }
