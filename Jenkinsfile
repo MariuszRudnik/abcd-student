@@ -81,7 +81,11 @@ pipeline {
                             echo "Result directory does not exist. Creating result directory..."
                             mkdir -p /var/jenkins_home/workspace/ZAP/result
                         fi
-                        find /var/jenkins_home/workspace/ZAP -mindepth 1 -maxdepth 1 ! -name 'result' -exec cp -r {} /var/jenkins_home/workspace/ZAP/result/ \;
+                        for item in /var/jenkins_home/workspace/ZAP/*; do
+    if [ "$(basename "$item")" != "result" ]; then
+        cp -r "$item" /var/jenkins_home/workspace/ZAP/result/
+    fi
+done
                     '''
                     echo "Results copied successfully."
                 }
