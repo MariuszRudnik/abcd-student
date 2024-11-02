@@ -59,7 +59,7 @@ pipeline {
                     sh '''
                         docker run --name zap \
                             --add-host=host.docker.internal:host-gateway \
-                            -v ~/Documents/DevSecOps/Test/workspace/ZAP:/zap/wrk/:rw \
+                            -v /var/jenkins_home/workspace/ZAP/results:/zap/wrk/:rw \
                             -t ghcr.io/zaproxy/zaproxy:stable bash -c \
                             "zap.sh -cmd -addonupdate; zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /zap/wrk/passive.yaml" || true
                     '''
@@ -77,7 +77,7 @@ pipeline {
                 script {
                     // Sprawdzamy, czy w katalogu 'results/' znajduje się plik wygenerowany przez ZAP
                     echo "Verifying if ZAP report exists in the 'results/' directory..."
-                    def zapReportExists = sh(script: 'test -f ~/Documents/DevSecOps/Test/workspace/ZAP/passive.yaml', returnStatus: true) == 0
+                    def zapReportExists = sh(script: 'test -f /var/jenkins_home/workspace/ZAP/results/passive.yaml', returnStatus: true) == 0
                     
                     if (zapReportExists) {
                         echo "ZAP report found. Verification successful."
