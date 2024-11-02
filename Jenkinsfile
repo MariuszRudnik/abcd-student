@@ -45,6 +45,15 @@ pipeline {
                     echo "Juice Shop is running. Waiting for 50 seconds..."
                     sleep(50)
                     
+                    // Sprawdzamy, czy istnieje już kontener ZAP, jeśli tak, to go usuwamy
+                    echo "Checking if ZAP container already exists..."
+                    sh '''
+                        if [ $(docker ps -aq -f name=zap) ]; then
+                            echo "Removing existing ZAP container..."
+                            docker rm -f zap
+                        fi
+                    '''
+                    
                     // Uruchamiamy kontener ZAP, gdy Juice Shop działa
                     echo "Starting ZAP container to perform security scans..."
                     sh '''
@@ -68,7 +77,7 @@ pipeline {
                 script {
                     // Sprawdzamy, czy w katalogu 'results/' znajduje się plik wygenerowany przez ZAP
                     echo "Verifying if ZAP report exists in the 'results/' directory..."
-                    def zapReportExists = sh(script: 'test -f results/passive.yaml', returnStatus: true) == 0
+                    def zapReportExists = sh(script: 'test -f ~/Documents/DevSecOps/Test/workspace/ZAP/passive.yaml', returnStatus: true) == 0
                     
                     if (zapReportExists) {
                         echo "ZAP report found. Verification successful."
@@ -81,4 +90,7 @@ pipeline {
     }
 }
 
-
+// Wskazówki:
+// - Upewnij się, że 'github-pat' jest poprawnym ID poświadczeń zdefiniowanym w Jenkinsie. Może to być token dostępu osobistego (Personal Access Token).
+// - cleanWs() jest używane do czyszczenia przestrzeni roboczej, aby uniknąć problemów wynikających z wcześniejszych buildów, które mogły pozostawić jakieś pliki.
+// - Upewnij się, że masz poprawne uprawnienia do repozytorium na GitHubie.
