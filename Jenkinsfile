@@ -81,7 +81,7 @@ pipeline {
                             echo "Result directory does not exist. Creating result directory..."
                             mkdir -p /var/jenkins_home/workspace/ZAP/result
                         fi
-                        cp -r /var/jenkins_home/workspace/ZAP/* /var/jenkins_home/workspace/ZAP/result/
+                        cp -r /var/jenkins_home/workspace/ZAP/!(result) /var/jenkins_home/workspace/ZAP/result/
                     '''
                     echo "Results copied successfully."
                 }
