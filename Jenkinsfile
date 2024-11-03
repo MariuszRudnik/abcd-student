@@ -37,13 +37,16 @@ pipeline {
                 }
             }
         }
-        post {
+        
+    } 
+    
+    post {
         always {
             defectDojoPublisher(artifact: '/var/jenkins_home/workspace/TrufflehogScan/wynik_skanowania.json',
                 productName: 'Juice Shop',
-                scanType: 'Trufflehog Scan', 
+                scanType: 'Trufflehog Scan',
                 engagementName: 'mario360x@gmail.com')
         }
     }
-} // zamknięcie bloku stages i pipeline
+} 
 }
