@@ -18,5 +18,23 @@ pipeline {
                 }
             }
         }
+
+        stage('Step 2: Run Juice Shop Container') {
+            steps {
+                script {
+                    echo "Starting Juice Shop container..."
+                    sh '''
+                        docker run --name juice-shop -d --rm -p 3000:3000 bkimminich/juice-shop
+                    '''
+                    echo "Juice Shop is running. Waiting for 20 seconds..."
+                    sh 'trufflehog --rules ~/Documents/DevSecOps/Test/workspace/TrufflehogScan/rules.yaml --json file://~/Documents/DevSecOps/Test/workspace/juice-shop > ~/Documents/DevSecOps/Test/workspace/TrufflehogScan/scan_result.json'
+                    sleep(20)
+                    
+                    echo "Stopping Juice Shop container..."
+                    sh 'docker stop juice-shop'
+                    echo "Juice Shop container stopped."
+                }
+            }
+        }
     } // zamknięcie bloku stages i pipeline
 }
