@@ -27,7 +27,7 @@ pipeline {
                         docker run --name juice-shop -d --rm -p 3000:3000 bkimminich/juice-shop
                     '''
                     echo "Juice Shop is running. Waiting for 20 seconds..."
-                    sh 'trufflehog --rules /var/jenkins_home/workspace/TrufflehogScan/rules.yaml --json file:///var/jenkins_home/workspace/juice-shop > /var/jenkins_home/workspace/TrufflehogScan/scan_result.json'
+                    sh 'trufflehog /var/jenkins_home/workspace/TrufflehogScan/ > wynik_skanowania2.json'
                     sleep(20)
                     
                     echo "Stopping Juice Shop container..."
