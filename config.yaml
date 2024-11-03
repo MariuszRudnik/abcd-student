@@ -1,0 +1,11 @@
+detectors:
+  - name: ABCD API Token
+    keywords:
+      - abcd
+    regex:
+      abcdToken: 'abcd_[0-9]{3}'
+    verify:
+      - endpoint: http://localhost:3000/
+        unsafe: true
+        headers:
+          - "Authorization: foobar"
