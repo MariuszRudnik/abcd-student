@@ -24,6 +24,7 @@ pipeline {
                 script {
                     echo "Starting Juice Shop container..."
                     sh '''
+                        docker rm -f juice-shop || true
                         docker run --name juice-shop -d --rm -p 3000:3000 bkimminich/juice-shop
                     '''
                     echo "Juice Shop is running. Waiting for 20 seconds..."
