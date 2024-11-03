@@ -37,8 +37,7 @@ pipeline {
                 }
             }
         }
-        
-    } 
+    }
     
     post {
         always {
@@ -48,5 +47,4 @@ pipeline {
                 engagementName: 'mario360x@gmail.com')
         }
     }
-} 
 }
