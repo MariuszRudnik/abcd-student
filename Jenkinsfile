@@ -18,7 +18,5 @@ pipeline {
                 }
             }
         }
-
-        
-    }
-
+    } // zamknięcie bloku stages i pipeline
+}
