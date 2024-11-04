@@ -10,7 +10,7 @@ pipeline {
                 script {
                     cleanWs() // Czyszczenie workspace
                     echo "Checking out code from GitHub repository..."
-                    git credentialsId: 'github-pat', url: 'https://github.com/MariuszRudnik/abcd-student', branch: 'Semgre'
+                    git credentialsId: 'github-pat', url: 'https://github.com/MariuszRudnik/abcd-student', branch: 'Semgrep'
                     echo "Code checked out. Listing workspace contents..."
                     sh 'ls -al ${WORKSPACE}'  // Wyświetlenie zawartości katalogu roboczego
                     echo "Waiting for 5 seconds..."
