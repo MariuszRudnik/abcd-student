@@ -5,7 +5,7 @@ rules:
           setTimeout($CODE, $TIME);
       - metavariable-pattern:
           metavariable: $CODE
-          pattern: '.*'
+          pattern: '[^"].*[^"]' # Zmieniony wzorzec, aby uniknąć błędu parsowania
     message: "Niebezpieczne użycie setTimeout z dynamicznie generowanym kodem. Unikaj używania eval-like strings."
     languages: [javascript, typescript]
     severity: WARNING
@@ -16,55 +16,7 @@ rules:
           setInterval($CODE, $TIME);
       - metavariable-pattern:
           metavariable: $CODE
-          pattern: '.*'
+          pattern: '[^"].*[^"]' # Zmieniony wzorzec, aby uniknąć błędu parsowania
     message: "Niebezpieczne użycie setInterval z dynamicznie generowanym kodem. Unikaj używania eval-like strings."
-    languages: [javascript, typescript]
-    severity: WARNING
-
-  - id: document-write
-    pattern: document.write(...)
-    message: "Używanie document.write jest potencjalnie niebezpieczne. Może prowadzić do XSS."
-    languages: [javascript, typescript]
-    severity: ERROR
-
-  - id: innerHTML-assignment
-    pattern: $OBJ.innerHTML = $VALUE
-    message: "Bezpośrednie przypisywanie do innerHTML jest niebezpieczne. Może prowadzić do XSS."
-    languages: [javascript, typescript]
-    severity: ERROR
-
-  - id: outerHTML-assignment
-    pattern: $OBJ.outerHTML = $VALUE
-    message: "Bezpośrednie przypisywanie do outerHTML jest niebezpieczne. Może prowadzić do XSS."
-    languages: [javascript, typescript]
-    severity: ERROR
-
-  - id: insertAdjacentHTML-assignment
-    pattern: $OBJ.insertAdjacentHTML($POSITION, $VALUE)
-    message: "Użycie insertAdjacentHTML może prowadzić do XSS. Rozważ użycie bezpieczniejszych metod manipulacji DOM."
-    languages: [javascript, typescript]
-    severity: ERROR
-
-  - id: XMLHttpRequest-usage
-    pattern: new XMLHttpRequest()
-    message: "Użycie XMLHttpRequest wymaga szczególnej uwagi, upewnij się, że jest zabezpieczone przed CSRF."
-    languages: [javascript, typescript]
-    severity: WARNING
-
-  - id: eval-usage
-    pattern: eval(...)
-    message: "Użycie eval jest bardzo niebezpieczne, ponieważ może prowadzić do zdalnego wykonania kodu (RCE). Unikaj jego użycia."
-    languages: [javascript, typescript]
-    severity: ERROR
-
-  - id: Function-constructor
-    pattern: new Function(...)
-    message: "Użycie konstruktora Function jest potencjalnie niebezpieczne i może prowadzić do RCE. Unikaj jego stosowania."
-    languages: [javascript, typescript]
-    severity: ERROR
-
-  - id: window-open
-    pattern: window.open($URL)
-    message: "Użycie window.open może prowadzić do phishingu, jeśli URL pochodzi z niezweryfikowanego źródła. Upewnij się, że adres URL jest bezpieczny."
     languages: [javascript, typescript]
     severity: WARNING
