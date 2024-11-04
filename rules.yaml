@@ -5,7 +5,7 @@ rules:
           setTimeout($CODE, $TIME);
       - metavariable-pattern:
           metavariable: $CODE
-          pattern: $".*"
+          pattern: '.*'
     message: "Niebezpieczne użycie setTimeout z dynamicznie generowanym kodem. Unikaj używania eval-like strings."
     languages: [javascript, typescript]
     severity: WARNING
@@ -16,7 +16,7 @@ rules:
           setInterval($CODE, $TIME);
       - metavariable-pattern:
           metavariable: $CODE
-          pattern: $".*"
+          pattern: '.*'
     message: "Niebezpieczne użycie setInterval z dynamicznie generowanym kodem. Unikaj używania eval-like strings."
     languages: [javascript, typescript]
     severity: WARNING
