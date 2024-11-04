@@ -1,26 +1,4 @@
 rules:
-  - id: dangerous-settimeout-setinterval
-    patterns:
-      - pattern: |
-          setTimeout($CODE, $TIME);
-      - metavariable-pattern:
-          metavariable: $CODE
-          pattern: '[^"].*[^"]' # Uproszczony wzorzec, aby uniknąć błędu parsowania
-    message: "Niebezpieczne użycie setTimeout z dynamicznie generowanym kodem. Unikaj używania eval-like strings."
-    languages: [javascript, typescript]
-    severity: WARNING
-
-  - id: dangerous-setinterval
-    patterns:
-      - pattern: |
-          setInterval($CODE, $TIME);
-      - metavariable-pattern:
-          metavariable: $CODE
-          pattern: '[^"].*[^"]' # Uproszczony wzorzec, aby uniknąć błędu parsowania
-    message: "Niebezpieczne użycie setInterval z dynamicznie generowanym kodem. Unikaj używania eval-like strings."
-    languages: [javascript, typescript]
-    severity: WARNING
-
   - id: document-write
     pattern: document.write(...)
     message: "Używanie document.write jest potencjalnie niebezpieczne. Może prowadzić do XSS."
