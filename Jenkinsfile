@@ -43,4 +43,13 @@ pipeline {
             }
         }
     }
+
+    post {
+        always {
+            defectDojoPublisher(artifact: '/var/jenkins_home/workspace/Semgrep/scan_results.json',
+                productName: 'Juice Shop',
+                scanType: 'Semgrep JSON Report',
+                engagementName: 'mario360x@gmail.com')
+        }
+    }
 }
