@@ -32,5 +32,15 @@ pipeline {
                 }
             }
         }
+
+        stage('Step 3: Semgrep scan') {
+            steps {
+                script {
+                    echo "Running Semgrep scan using rules.yaml..."
+                    sh 'semgrep --config /var/jenkins_home/workspace/Semgrep/rules.yaml /var/jenkins_home/workspace/Semgrep --json > /var/jenkins_home/workspace/Semgrep/scan_results.json'
+                    echo "Semgrep scan completed. Results saved to /var/jenkins_home/workspace/Semgrep/scan_results.json"
+                }
+            }
+        }
     }
 }
